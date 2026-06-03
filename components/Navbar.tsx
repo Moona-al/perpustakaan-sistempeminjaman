@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
-import { Library, BookOpen, Clock, LogOut, Sun, Moon, Heart } from 'lucide-react';
+import { Library, BookOpen, Clock, LogOut, Sun, Moon, Heart, LayoutGrid } from 'lucide-react';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -48,6 +48,18 @@ export default function Navbar() {
           >
             <BookOpen className="h-4 w-4" />
             Katalog Buku
+          </Link>
+
+          <Link
+            href="/user/genres"
+            className={`flex items-center gap-1.5 rounded-lg px-2.5 sm:px-3.5 py-2 text-xs sm:text-sm font-semibold transition-all duration-300 border ${
+              pathname === '/user/genres'
+                ? 'bg-red-50 dark:bg-red-600/10 text-red-600 dark:text-red-500 border-red-200 dark:border-red-500/20 shadow-sm'
+                : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 border-transparent hover:bg-zinc-100/50 dark:hover:bg-zinc-900/30'
+            }`}
+          >
+            <LayoutGrid className="h-4 w-4" />
+            Genre Buku
           </Link>
 
           <Link

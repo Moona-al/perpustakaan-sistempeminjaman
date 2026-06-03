@@ -195,10 +195,6 @@ export default function LoginPage() {
         </form>
       </div>
 
-      {/* Footer info */}
-      <p className="mt-8 text-xs text-zinc-600 text-center relative z-10">
-        Sistem Informasi Perpustakaan &copy; 2026. Made with Google Gemini.
-      </p>
 
       {/* Toast Alert */}
       {toast && (

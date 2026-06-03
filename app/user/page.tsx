@@ -24,6 +24,7 @@ export default function StudentCatalog() {
   const [category, setCategory] = useState('Semua');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [heroIndex, setHeroIndex] = useState(0);
 
   // API loading states
   const [apiBooks, setApiBooks] = useState<Book[]>([]);
@@ -90,8 +91,18 @@ export default function StudentCatalog() {
   // Netflix rows selections (only active when not searching)
   const isSearchActive = searchTerm !== '' || category !== 'Semua';
   
-  // Hardcoded or dynamically picked featured book for Hero
-  const featuredBook = allCatalogBooks.find(b => b._id === "6782324379bd51cee772b72d") || allCatalogBooks[0] || null;
+  // Hero recommendations: take first 5 books to cycle
+  const heroBooks = allCatalogBooks.slice(0, 5);
+  const featuredBook = (heroIndex < heroBooks.length ? heroBooks[heroIndex] : heroBooks[0]) || null;
+
+  // Auto-cycle Featured Book every 5 seconds
+  useEffect(() => {
+    if (heroBooks.length <= 1) return;
+    const interval = setInterval(() => {
+      setHeroIndex(prev => (prev + 1) % heroBooks.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [heroBooks.length]);
 
   // Row Data lists
   const popularBooks = allCatalogBooks.slice(0, 8);
@@ -120,27 +131,53 @@ export default function StudentCatalog() {
     } else {
       setToast({ message: result.message, type: 'error' });
     }
-  };
-
-  return (
+  };  return (
     <div className="space-y-10 min-h-screen pb-16 bg-zinc-50 dark:bg-[#141414] text-zinc-900 dark:text-zinc-100 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 pt-4 transition-colors duration-300">
-      {/* Hide Scrollbar Style Injector */}
+      {/* Premium Animations & Style Injector */}
       <style jsx global>{`
         .scrollbar-none::-webkit-scrollbar { display: none; }
         .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        @keyframes kenburns {
+          0% { transform: scale(1.03) translate(0, 0); }
+          50% { transform: scale(1.08) translate(0.5%, -0.5%); }
+          100% { transform: scale(1.03) translate(0, 0); }
+        }
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(16px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes float {
+          0% { transform: translateY(0px) rotate(0deg); }
+          50% { transform: translateY(-8px) rotate(1deg); }
+          100% { transform: translateY(0px) rotate(0deg); }
+        }
+        .animate-kenburns {
+          animation: kenburns 30s ease-in-out infinite;
+        }
+        .animate-fade-up {
+          animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .animate-float {
+          animation: float 5s ease-in-out infinite;
+        }
+        .delay-100 { animation-delay: 100ms; }
+        .delay-200 { animation-delay: 200ms; }
+        .delay-300 { animation-delay: 300ms; }
+        .delay-400 { animation-delay: 400ms; }
       `}</style>
 
       {/* 1. Netflix Hero Billboard */}
       {!isSearchActive && featuredBook && (
-        <div className="relative w-full rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800/80 aspect-[16/9] md:aspect-[21/9] bg-white dark:bg-zinc-950 flex items-center shadow-lg dark:shadow-2xl transition-all duration-300">
+        <div key={featuredBook._id} className="relative w-full rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800/80 aspect-[16/9] md:aspect-[21/9] bg-white dark:bg-zinc-950 flex flex-row items-center justify-between shadow-lg dark:shadow-2xl transition-all duration-300">
           {/* Backdrop Cover Image */}
           <div className="absolute inset-0 select-none">
-            <div className="absolute inset-0 bg-gradient-to-r from-white via-white/90 to-transparent dark:from-black dark:via-black/85 dark:to-transparent z-10" />
+            <div className="absolute inset-0 bg-gradient-to-r from-white via-white/95 to-transparent dark:from-black dark:via-black/90 dark:to-transparent z-10" />
             <div className="absolute inset-0 bg-gradient-to-t from-zinc-50 via-transparent to-transparent dark:from-[#141414] dark:via-transparent dark:to-transparent z-10" />
             <img
               src={featuredBook.cover_image}
               alt={featuredBook.title}
-              className="w-full h-full object-cover blur-[6px] opacity-25 dark:opacity-40 scale-105"
+              className="w-full h-full object-cover blur-[8px] opacity-25 dark:opacity-35 scale-105 animate-kenburns"
               onError={e => {
                 (e.target as HTMLImageElement).src =
                   'https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=1200&auto=format&fit=crop';
@@ -148,27 +185,27 @@ export default function StudentCatalog() {
             />
           </div>
 
-          {/* Featured Content details */}
+          {/* Left Column: Featured Content details */}
           <div className="relative z-10 max-w-xl px-6 sm:px-12 py-8 flex flex-col items-start space-y-4">
-            <span className="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-widest text-red-600 dark:text-red-500 bg-red-600/10 px-2.5 py-1 rounded border border-red-600/20 dark:border-red-500/25">
+            <span className="opacity-0 animate-fade-up inline-flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-widest text-red-600 dark:text-red-500 bg-red-600/10 px-2.5 py-1 rounded border border-red-600/20 dark:border-red-500/25">
               <Sparkles className="h-3 w-3 fill-red-600 dark:fill-red-500 animate-pulse" /> REKOMENDASI HARI INI
             </span>
-            <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-tight text-zinc-950 dark:text-white drop-shadow-sm">
+            <h1 className="opacity-0 animate-fade-up delay-100 text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-tight text-zinc-950 dark:text-white drop-shadow-sm">
               {featuredBook.title}
             </h1>
-            <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 font-bold drop-shadow-sm">
+            <p className="opacity-0 animate-fade-up delay-200 text-xs sm:text-sm text-zinc-650 dark:text-zinc-400 font-bold drop-shadow-sm">
               Karya <span className="text-zinc-800 dark:text-zinc-200">{featuredBook.author?.name}</span> &bull; {featuredBook.category?.name}
             </p>
-            <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-300 line-clamp-3 leading-relaxed drop-shadow-sm max-w-lg font-medium">
+            <p className="opacity-0 animate-fade-up delay-300 text-xs sm:text-sm text-zinc-600 dark:text-zinc-300 line-clamp-3 leading-relaxed drop-shadow-sm max-w-lg font-medium">
               {featuredBook.summary}
             </p>
 
             {/* Actions */}
-            <div className="flex items-center gap-3 pt-2">
+            <div className="opacity-0 animate-fade-up delay-400 flex items-center gap-3 pt-2">
               <button
                 onClick={() => handleBorrow(featuredBook)}
                 disabled={borrowingId === featuredBook._id}
-                className="flex items-center gap-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-extrabold px-6 py-3 text-xs sm:text-sm shadow-lg shadow-red-600/20 dark:shadow-red-950/20 active:scale-[0.98] transition-all disabled:opacity-75 cursor-pointer"
+                className="flex items-center gap-2 rounded-xl bg-red-650 hover:bg-red-700 text-white font-extrabold px-6 py-3 text-xs sm:text-sm shadow-lg shadow-red-600/20 dark:shadow-red-950/20 active:scale-[0.98] transition-all disabled:opacity-75 cursor-pointer"
               >
                 {borrowingId === featuredBook._id ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -184,6 +221,27 @@ export default function StudentCatalog() {
                 <Info className="h-4 w-4" />
                 Info Detail
               </button>
+            </div>
+          </div>
+
+          {/* Right Column: Floating 3D Cover */}
+          <div className="hidden md:flex relative z-10 w-1/3 pr-8 lg:pr-16 justify-end items-center self-stretch py-8">
+            <div className="relative group/cover cursor-pointer animate-float">
+              {/* Outer Glow */}
+              <div className="absolute -inset-2 bg-gradient-to-tr from-red-600 to-orange-500 rounded-2xl blur-xl opacity-25 group-hover/cover:opacity-50 transition duration-700 pointer-events-none" />
+              
+              {/* Image Frame */}
+              <div className="relative rounded-2xl overflow-hidden border border-zinc-200/20 dark:border-zinc-800/80 shadow-2xl transition-transform duration-500 group-hover/cover:-translate-y-2 group-hover/cover:scale-105 group-hover/cover:rotate-2">
+                <img
+                  src={featuredBook.cover_image}
+                  alt={featuredBook.title}
+                  className="w-40 lg:w-48 aspect-[2/3] object-cover"
+                  onError={e => {
+                    (e.target as HTMLImageElement).src =
+                      'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=387&auto=format&fit=crop';
+                  }}
+                />
+              </div>
             </div>
           </div>
         </div>
