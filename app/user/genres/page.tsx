@@ -7,7 +7,7 @@ import { useBooks } from '@/context/BookContext';
 import type { Book } from '@/context/BookContext';
 import { useFavorites } from '@/context/FavoritesContext';
 import Toast from '@/components/Toast';
-import { 
+import {
   LayoutGrid, Sparkles, Heart, BookOpen, Flame, Feather, Leaf, Smile, Compass,
   ChevronLeft, ChevronRight, Loader2, X, ArrowRight, BookMarked, Play, Info
 } from 'lucide-react';
@@ -38,6 +38,7 @@ export default function GenresPage() {
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [borrowingId, setBorrowingId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const [selectedDuration, setSelectedDuration] = useState<number>(7);
 
   // Define genres with metadata for premium UI
   const genresList: GenreInfo[] = [
@@ -147,18 +148,18 @@ export default function GenresPage() {
   const allCatalogBooks = [...filteredCustomBooks, ...filteredApiBooks];
 
   // Handle self-borrow
-  const handleBorrow = async (book: Book) => {
+  const handleBorrow = async (book: Book, durationDays = 7) => {
     if (!user) return;
 
     setBorrowingId(book._id);
     // Small delay for UX feedback
     await new Promise(r => setTimeout(r, 600));
 
-    const result = await borrowBook(book._id, user.username, 7);
+    const result = await borrowBook(book._id, user.username, durationDays);
     setBorrowingId(null);
 
     if (result.success) {
-      setToast({ message: `✓ Berhasil! "${book.title}" dipinjam selama 7 hari.`, type: 'success' });
+      setToast({ message: `✓ Berhasil! "${book.title}" dipinjam selama ${durationDays} hari.`, type: 'success' });
       // Close modal if open
       setSelectedBook(null);
     } else {
@@ -189,11 +190,10 @@ export default function GenresPage() {
             <button
               key={genreItem.name}
               onClick={() => handleCategoryChange(genreItem.name)}
-              className={`group relative overflow-hidden rounded-2xl p-5 text-left border transition-all duration-300 flex flex-col justify-between aspect-[16/11] sm:aspect-[16/10] cursor-pointer ${
-                isSelected
-                  ? 'border-red-500 dark:border-red-500 ring-2 ring-red-500/20 shadow-md scale-[1.02]'
-                  : 'border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-zinc-900/60 hover:border-zinc-350 dark:hover:border-zinc-700 shadow-sm hover:scale-[1.02]'
-              }`}
+              className={`group relative overflow-hidden rounded-2xl p-5 text-left border transition-all duration-300 flex flex-col justify-between aspect-[16/11] sm:aspect-[16/10] cursor-pointer ${isSelected
+                ? 'border-red-500 dark:border-red-500 ring-2 ring-red-500/20 shadow-md scale-[1.02]'
+                : 'border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-zinc-900/60 hover:border-zinc-350 dark:hover:border-zinc-700 shadow-sm hover:scale-[1.02]'
+                }`}
             >
               {/* Decorative background glow for selected/hover */}
               <div className={`absolute -right-6 -bottom-6 w-24 h-24 rounded-full blur-2xl opacity-15 dark:opacity-25 transition-all duration-500 group-hover:scale-150 bg-gradient-to-br ${genreItem.gradient}`} />
@@ -203,7 +203,7 @@ export default function GenresPage() {
                   <IconComponent className="h-5 w-5" />
                 </div>
                 {isSelected && (
-                  <span className="flex h-2.5 w-2.5 rounded-full bg-red-650 dark:bg-red-500 animate-pulse" />
+                  <span className="flex h-2.5 w-2.5 rounded-full bg-teal-600 dark:bg-teal-400 animate-pulse" />
                 )}
               </div>
 
@@ -270,7 +270,7 @@ export default function GenresPage() {
                       ✓ Tersedia
                     </span>
                     {book.isCustom && (
-                      <span className="absolute top-2 left-2 bg-red-650/90 backdrop-blur-sm text-[8px] font-bold text-white px-1.5 py-0.5 rounded uppercase">
+                      <span className="absolute top-2 left-2 bg-teal-600/90 backdrop-blur-sm text-[8px] font-bold text-white px-1.5 py-0.5 rounded uppercase">
                         Admin
                       </span>
                     )}
@@ -284,11 +284,10 @@ export default function GenresPage() {
                       title={isFavorite(book._id) ? "Hapus dari Favorit" : "Tambah ke Favorit"}
                     >
                       <Heart
-                        className={`h-3.5 w-3.5 transition-colors ${
-                          isFavorite(book._id)
-                            ? 'fill-red-600 text-red-600'
-                            : 'text-zinc-650 dark:text-zinc-300'
-                        }`}
+                        className={`h-3.5 w-3.5 transition-colors ${isFavorite(book._id)
+                          ? 'fill-red-600 text-red-600'
+                          : 'text-zinc-650 dark:text-zinc-300'
+                          }`}
                       />
                     </button>
                   </div>
@@ -383,7 +382,7 @@ export default function GenresPage() {
               </button>
 
               <div className="space-y-4">
-                <span className="inline-flex items-center rounded bg-red-600/10 px-2 py-0.5 text-[9px] font-extrabold tracking-wider uppercase text-red-650 dark:text-red-500 border border-red-550/20">
+                <span className="inline-flex items-center rounded bg-teal-600/10 px-2 py-0.5 text-[9px] font-extrabold tracking-wider uppercase text-teal-600 dark:text-teal-400 border border-teal-500/20">
                   {selectedBook.category?.name || 'Lainnya'}
                 </span>
                 <h3 className="text-xl md:text-2xl font-black text-zinc-900 dark:text-white leading-tight">
@@ -392,7 +391,7 @@ export default function GenresPage() {
                 <p className="text-xs text-zinc-500 dark:text-zinc-450 font-bold">
                   Penulis: <span className="text-zinc-800 dark:text-zinc-200">{selectedBook.author?.name}</span>
                 </p>
-                
+
                 {/* Scrollable Summary */}
                 <div className="border-t border-b border-zinc-200 dark:border-zinc-800/80 py-3 my-2">
                   <h4 className="text-xs font-bold uppercase text-zinc-400 dark:text-zinc-500 tracking-wider mb-1.5">Sinopsis Buku</h4>
@@ -424,12 +423,32 @@ export default function GenresPage() {
                 )}
               </div>
 
+              {/* Duration Selector */}
+              <div className="space-y-1.5 pt-4 border-t border-zinc-200 dark:border-zinc-800/80">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Durasi Peminjaman</label>
+                <div className="flex gap-2">
+                  {[7, 14, 30].map((d) => (
+                    <button
+                      key={d}
+                      type="button"
+                      onClick={() => setSelectedDuration(d)}
+                      className={`flex-grow py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${selectedDuration === d
+                        ? 'bg-teal-600/10 border-teal-500/35 text-teal-600 dark:text-teal-400'
+                        : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-zinc-555 hover:bg-zinc-100 dark:hover:bg-zinc-900'
+                        }`}
+                    >
+                      {d} Hari
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Borrow action & Favorite Toggle */}
               <div className="pt-4 flex gap-2">
                 <button
-                  onClick={() => handleBorrow(selectedBook)}
+                  onClick={() => handleBorrow(selectedBook, selectedDuration)}
                   disabled={borrowingId === selectedBook._id}
-                  className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-red-650 hover:bg-red-750 dark:bg-red-655 dark:hover:bg-red-700 py-3 text-xs font-extrabold text-white shadow-lg active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-wait cursor-pointer"
+                  className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-teal-600 hover:bg-teal-700 dark:bg-teal-600 dark:hover:bg-teal-700 py-3 text-xs font-extrabold text-white shadow-lg active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-wait cursor-pointer"
                 >
                   {borrowingId === selectedBook._id ? (
                     <>
@@ -439,17 +458,16 @@ export default function GenresPage() {
                   ) : (
                     <>
                       <BookMarked className="h-4 w-4" />
-                      Pinjam Sekarang (7 Hari)
+                      Pinjam Sekarang ({selectedDuration} Hari)
                     </>
                   )}
                 </button>
                 <button
                   onClick={() => toggleFavorite(selectedBook._id)}
-                  className={`flex h-11 w-11 items-center justify-center rounded-xl border transition-all duration-300 cursor-pointer ${
-                    isFavorite(selectedBook._id)
-                      ? 'bg-red-50 dark:bg-red-955/30 border-red-200 dark:border-red-500/30 text-red-650 dark:text-red-500'
-                      : 'bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400'
-                  }`}
+                  className={`flex h-11 w-11 items-center justify-center rounded-xl border transition-all duration-300 cursor-pointer ${isFavorite(selectedBook._id)
+                    ? 'bg-teal-50 dark:bg-teal-950/30 border-teal-200 dark:border-teal-500/30 text-teal-600 dark:text-teal-400'
+                    : 'bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400'
+                    }`}
                   title={isFavorite(selectedBook._id) ? "Hapus dari Favorit" : "Tambah ke Favorit"}
                 >
                   <Heart className={`h-5 w-5 ${isFavorite(selectedBook._id) ? 'fill-red-600 text-red-600' : ''}`} />

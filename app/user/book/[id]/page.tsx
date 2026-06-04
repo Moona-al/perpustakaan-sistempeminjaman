@@ -25,6 +25,7 @@ export default function BookDetailPage() {
   const [error, setError] = useState(false);
   const [isBorrowing, setIsBorrowing] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const [selectedDuration, setSelectedDuration] = useState<number>(7);
 
   useEffect(() => {
     if (!bookId) return;
@@ -61,10 +62,10 @@ export default function BookDetailPage() {
     if (!user || !book) return;
     setIsBorrowing(true);
     await new Promise(r => setTimeout(r, 700));
-    const result = await borrowBook(book._id, user.username, 7);
+    const result = await borrowBook(book._id, user.username, selectedDuration);
     setIsBorrowing(false);
     if (result.success) {
-      setToast({ message: `✓ "${book.title}" berhasil dipinjam selama 7 hari!`, type: 'success' });
+      setToast({ message: `✓ "${book.title}" berhasil dipinjam selama ${selectedDuration} hari!`, type: 'success' });
     } else {
       setToast({ message: result.message, type: 'error' });
     }
@@ -153,8 +154,29 @@ export default function BookDetailPage() {
                   <CheckCircle className="h-4.5 w-4.5" /> Tersedia untuk Dipinjam
                 </div>
                 <p className="text-[11px] text-zinc-500 leading-relaxed font-semibold">
-                  Klik tombol di bawah untuk meminjam buku ini selama <strong className="text-zinc-700 dark:text-zinc-300">7 hari</strong>. Denda <strong className="text-zinc-700 dark:text-zinc-300">Rp 1.000/hari</strong> berlaku jika terlambat dikembalikan.
+                  Klik tombol di bawah untuk meminjam buku ini selama <strong className="text-zinc-700 dark:text-zinc-300">{selectedDuration} hari</strong>. Denda <strong className="text-zinc-700 dark:text-zinc-300">Rp 1.000/hari</strong> berlaku jika terlambat dikembalikan.
                 </p>
+
+                {/* Duration Selector */}
+                <div className="space-y-1.5 pt-3 border-t border-zinc-100 dark:border-zinc-800/80">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-505">Durasi Peminjaman</label>
+                  <div className="flex gap-2">
+                    {[7, 14, 30].map((d) => (
+                      <button
+                        key={d}
+                        type="button"
+                        onClick={() => setSelectedDuration(d)}
+                        className={`flex-grow py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${selectedDuration === d
+                            ? 'bg-indigo-600/10 border-indigo-500/35 text-indigo-600 dark:text-indigo-400'
+                            : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-zinc-555 hover:bg-zinc-100 dark:hover:bg-zinc-900'
+                          }`}
+                      >
+                        {d} Hari
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <button
                   onClick={handleBorrow}
                   disabled={isBorrowing}
@@ -163,7 +185,7 @@ export default function BookDetailPage() {
                   {isBorrowing ? (
                     <><Loader2 className="h-4 w-4 animate-spin" /> Memproses...</>
                   ) : (
-                    <><BookMarked className="h-4 w-4" /> Pinjam Buku Sekarang</>
+                    <><BookMarked className="h-4 w-4" /> Pinjam Buku Sekarang ({selectedDuration} Hari)</>
                   )}
                 </button>
               </>

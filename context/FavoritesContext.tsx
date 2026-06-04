@@ -18,7 +18,9 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   // Initialize and synchronize favorites from localStorage based on username
   useEffect(() => {
     if (!user?.username) {
-      setFavorites([]);
+      setTimeout(() => {
+        setFavorites([]);
+      }, 0);
       return;
     }
 
@@ -26,13 +28,20 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     const saved = localStorage.getItem(key);
     if (saved) {
       try {
-        setFavorites(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+        setTimeout(() => {
+          setFavorites(parsed);
+        }, 0);
       } catch (err) {
         console.error('Failed to parse favorites from localStorage:', err);
-        setFavorites([]);
+        setTimeout(() => {
+          setFavorites([]);
+        }, 0);
       }
     } else {
-      setFavorites([]);
+      setTimeout(() => {
+        setFavorites([]);
+      }, 0);
     }
   }, [user?.username]);
 

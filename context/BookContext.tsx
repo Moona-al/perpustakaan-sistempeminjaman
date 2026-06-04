@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 export interface Book {
   _id: string;
@@ -58,6 +58,7 @@ interface BookContextType {
   addStudent: (student: Student) => Promise<void>;
   updateTransaction: (transaction: Transaction) => Promise<{ success: boolean; message: string }>;
   deleteTransaction: (transactionId: string) => Promise<{ success: boolean; message: string }>;
+  refreshStudents: () => Promise<void>;
 }
 
 const BookContext = createContext<BookContextType | undefined>(undefined);
@@ -167,8 +168,8 @@ export function BookProvider({ children }: { children: React.ReactNode }) {
     return newBook;
   };
 
-  const updateBook = (updatedBook: Book) => {};
-  const deleteBook = (id: string) => {};
+  const updateBook = (updatedBook: Book) => { };
+  const deleteBook = (id: string) => { };
 
   // Availability check
   const isBookAvailable = (bookId: string): boolean => {
@@ -277,9 +278,9 @@ export function BookProvider({ children }: { children: React.ReactNode }) {
       const data = await res.json();
 
       setTransactions(prev => prev.map(t => t.id === transactionId ? data.transaction : t));
-      return { 
-        success: true, 
-        message: `Buku "${tx.bookTitle}" berhasil dikembalikan. ${finalFine > 0 ? `Denda keterlambatan: Rp ${finalFine.toLocaleString('id-ID')}` : 'Tidak ada denda.'}` 
+      return {
+        success: true,
+        message: `Buku "${tx.bookTitle}" berhasil dikembalikan. ${finalFine > 0 ? `Denda keterlambatan: Rp ${finalFine.toLocaleString('id-ID')}` : 'Tidak ada denda.'}`
       };
     } catch (err) {
       console.error(err);
@@ -296,7 +297,7 @@ export function BookProvider({ children }: { children: React.ReactNode }) {
       });
       if (!res.ok) throw new Error('Failed to update transaction');
       const data = await res.json();
-      
+
       setTransactions(prev => prev.map(t => t.id === updatedTx.id ? data.transaction : t));
       return { success: true, message: 'Transaksi berhasil diperbarui.' };
     } catch (err) {
@@ -311,7 +312,7 @@ export function BookProvider({ children }: { children: React.ReactNode }) {
         method: 'DELETE'
       });
       if (!res.ok) throw new Error('Failed to delete transaction');
-      
+
       setTransactions(prev => prev.filter(t => t.id !== transactionId));
       return { success: true, message: 'Transaksi berhasil dihapus secara permanen.' };
     } catch (err) {
@@ -326,7 +327,7 @@ export function BookProvider({ children }: { children: React.ReactNode }) {
 
   const addStudent = async (student: Student) => {
     if (students.some(s => s.username === student.username.toLowerCase())) return;
-    
+
     try {
       const res = await fetch('/api/students', {
         method: 'POST',
@@ -335,7 +336,7 @@ export function BookProvider({ children }: { children: React.ReactNode }) {
       });
       if (!res.ok) throw new Error('Failed to save student');
       const data = await res.json();
-      
+
       setStudents(prev => [...prev, data.student]);
     } catch (err) {
       console.error('Failed to register student on server database:', err);
@@ -343,6 +344,18 @@ export function BookProvider({ children }: { children: React.ReactNode }) {
       setStudents(prev => [...prev, { ...student, username: student.username.toLowerCase() }]);
     }
   };
+
+  const refreshStudents = useCallback(async () => {
+    try {
+      const stdRes = await fetch('/api/students');
+      if (stdRes.ok) {
+        const stdData = await stdRes.json();
+        setStudents(stdData);
+      }
+    } catch (err) {
+      console.error('Error refreshing students:', err);
+    }
+  }, []);
 
   return (
     <BookContext.Provider value={{
@@ -358,7 +371,8 @@ export function BookProvider({ children }: { children: React.ReactNode }) {
       isBookAvailable,
       addStudent,
       updateTransaction,
-      deleteTransaction
+      deleteTransaction,
+      refreshStudents
     }}>
       {children}
     </BookContext.Provider>

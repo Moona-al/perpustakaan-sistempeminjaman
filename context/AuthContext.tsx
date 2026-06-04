@@ -11,9 +11,10 @@ export interface User {
 
 interface AuthContextType {
   user: User | null;
-  login: (username: string, password: string, role: 'admin' | 'user') => boolean;
+  login: (username: string, password: string, role: 'admin' | 'user') => Promise<boolean>;
   logout: () => void;
   isLoading: boolean;
+  updateSession: (updatedUser: User) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,34 +29,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const savedUser = localStorage.getItem('perpus_session');
     if (savedUser) {
       try {
-        setUser(JSON.parse(savedUser));
+        const parsed = JSON.parse(savedUser);
+        setTimeout(() => {
+          setUser(parsed);
+        }, 0);
       } catch (e) {
         console.error('Failed to parse session', e);
       }
     }
-    setIsLoading(false);
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 0);
   }, []);
 
-  const login = (username: string, password: string, role: 'admin' | 'user'): boolean => {
-    // Basic mock credentials validation
-    if (role === 'admin' && username.toLowerCase() === 'admin' && password === 'admin123') {
-      const newUser: User = { username: 'admin', name: 'Administrator', role: 'admin' };
-      setUser(newUser);
-      localStorage.setItem('perpus_session', JSON.stringify(newUser));
-      return true;
-    } else if (role === 'user' && username.trim() !== '' && password === 'user321') {
-      // Map other entries to mock users or dynamic students
-      const formattedName = username.charAt(0).toUpperCase() + username.slice(1);
-      const newUser: User = { 
-        username: username.toLowerCase().trim(), 
-        name: formattedName, 
-        role: 'user' 
-      };
-      setUser(newUser);
-      localStorage.setItem('perpus_session', JSON.stringify(newUser));
-      return true;
+  const login = async (username: string, password: string, role: 'admin' | 'user'): Promise<boolean> => {
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, role }),
+      });
+
+      if (!res.ok) return false;
+
+      const data = await res.json();
+      if (data.success && data.user) {
+        setUser(data.user);
+        localStorage.setItem('perpus_session', JSON.stringify(data.user));
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error('Login error in AuthContext:', err);
+      return false;
     }
-    return false;
   };
 
   const logout = () => {
@@ -64,8 +71,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.push('/');
   };
 
+  const updateSession = (updatedUser: User) => {
+    const currentUser = user;
+    if (currentUser && currentUser.username !== updatedUser.username) {
+      // Migrate favorites key in localStorage if username changes
+      const oldKey = `perpus_favorites_${currentUser.username.toLowerCase().trim()}`;
+      const newKey = `perpus_favorites_${updatedUser.username.toLowerCase().trim()}`;
+      const favs = localStorage.getItem(oldKey);
+      if (favs) {
+        localStorage.setItem(newKey, favs);
+        localStorage.removeItem(oldKey);
+      }
+    }
+    setUser(updatedUser);
+    localStorage.setItem('perpus_session', JSON.stringify(updatedUser));
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, login, logout, isLoading, updateSession }}>
       {children}
     </AuthContext.Provider>
   );

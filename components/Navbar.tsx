@@ -23,14 +23,14 @@ export default function Navbar() {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Brand */}
         <Link href="/user" className="flex items-center gap-2 text-zinc-900 dark:text-zinc-100">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-tr from-red-600 to-red-800 text-white shadow-lg shadow-red-600/30">
-            <Library className="h-4.5 w-4.5" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white dark:bg-zinc-900 p-1 shadow-lg shadow-teal-600/10">
+            <img src="/logo.png" alt="Logo" className="h-10 w-10 object-contain" />
           </div>
           <div>
-            <span className="font-bold text-base tracking-tight bg-gradient-to-r from-red-600 to-zinc-900 dark:from-red-500 dark:to-white bg-clip-text text-transparent">
-              NET-PERPUS
+            <span className="font-bold text-base tracking-tight bg-gradient-to-r from-teal-600 to-zinc-900 dark:from-teal-500 dark:to-white bg-clip-text text-transparent">
+              peaceminusone-lib
             </span>
-            <span className="ml-1.5 rounded bg-red-600/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-red-500 border border-red-500/20">
+            <span className="ml-1.5 rounded bg-teal-600/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-teal-600 dark:text-teal-400 border border-teal-500/20">
               Siswa
             </span>
           </div>
@@ -40,11 +40,10 @@ export default function Navbar() {
         <nav className="flex items-center gap-1 sm:gap-2">
           <Link
             href="/user"
-            className={`flex items-center gap-1.5 rounded-lg px-2.5 sm:px-3.5 py-2 text-xs sm:text-sm font-semibold transition-all duration-300 border ${
-              pathname === '/user'
-                ? 'bg-red-50 dark:bg-red-600/10 text-red-600 dark:text-red-500 border-red-200 dark:border-red-500/20 shadow-sm'
+            className={`flex items-center gap-1.5 rounded-lg px-2.5 sm:px-3.5 py-2 text-xs sm:text-sm font-semibold transition-all duration-300 border ${pathname === '/user'
+                ? 'bg-teal-50 dark:bg-teal-600/10 text-teal-600 dark:text-teal-400 border-teal-200 dark:border-teal-500/20 shadow-sm'
                 : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 border-transparent hover:bg-zinc-100/50 dark:hover:bg-zinc-900/30'
-            }`}
+              }`}
           >
             <BookOpen className="h-4 w-4" />
             Katalog Buku
@@ -52,11 +51,10 @@ export default function Navbar() {
 
           <Link
             href="/user/genres"
-            className={`flex items-center gap-1.5 rounded-lg px-2.5 sm:px-3.5 py-2 text-xs sm:text-sm font-semibold transition-all duration-300 border ${
-              pathname === '/user/genres'
-                ? 'bg-red-50 dark:bg-red-600/10 text-red-600 dark:text-red-500 border-red-200 dark:border-red-500/20 shadow-sm'
+            className={`flex items-center gap-1.5 rounded-lg px-2.5 sm:px-3.5 py-2 text-xs sm:text-sm font-semibold transition-all duration-300 border ${pathname === '/user/genres'
+                ? 'bg-teal-50 dark:bg-teal-600/10 text-teal-600 dark:text-teal-400 border-teal-200 dark:border-teal-500/20 shadow-sm'
                 : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 border-transparent hover:bg-zinc-100/50 dark:hover:bg-zinc-900/30'
-            }`}
+              }`}
           >
             <LayoutGrid className="h-4 w-4" />
             Genre Buku
@@ -64,11 +62,10 @@ export default function Navbar() {
 
           <Link
             href="/user/favorites"
-            className={`flex items-center gap-1.5 rounded-lg px-2.5 sm:px-3.5 py-2 text-xs sm:text-sm font-semibold transition-all duration-300 border ${
-              pathname === '/user/favorites'
-                ? 'bg-red-50 dark:bg-red-600/10 text-red-600 dark:text-red-500 border-red-200 dark:border-red-500/20 shadow-sm'
+            className={`flex items-center gap-1.5 rounded-lg px-2.5 sm:px-3.5 py-2 text-xs sm:text-sm font-semibold transition-all duration-300 border ${pathname === '/user/favorites'
+                ? 'bg-teal-50 dark:bg-teal-600/10 text-teal-600 dark:text-teal-400 border-teal-200 dark:border-teal-500/20 shadow-sm'
                 : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 border-transparent hover:bg-zinc-100/50 dark:hover:bg-zinc-900/30'
-            }`}
+              }`}
           >
             <Heart className="h-4 w-4" />
             Buku Favorit
@@ -76,11 +73,10 @@ export default function Navbar() {
 
           <Link
             href="/user/history"
-            className={`flex items-center gap-1.5 rounded-lg px-2.5 sm:px-3.5 py-2 text-xs sm:text-sm font-semibold transition-all duration-300 border ${
-              pathname === '/user/history'
-                ? 'bg-red-50 dark:bg-red-600/10 text-red-600 dark:text-red-500 border-red-200 dark:border-red-500/20 shadow-sm'
+            className={`flex items-center gap-1.5 rounded-lg px-2.5 sm:px-3.5 py-2 text-xs sm:text-sm font-semibold transition-all duration-300 border ${pathname === '/user/history'
+                ? 'bg-teal-50 dark:bg-teal-600/10 text-teal-600 dark:text-teal-400 border-teal-200 dark:border-teal-500/20 shadow-sm'
                 : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 border-transparent hover:bg-zinc-100/50 dark:hover:bg-zinc-900/30'
-            }`}
+              }`}
           >
             <Clock className="h-4 w-4" />
             Riwayat Pinjam
@@ -103,15 +99,21 @@ export default function Navbar() {
           </button>
 
           {/* User Card */}
-          <div className="hidden sm:flex items-center gap-2 border-l border-zinc-200 dark:border-zinc-800 pl-4 py-1">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-red-700 text-xs font-bold text-white border border-red-600/40">
+          <Link
+            href="/user/profile"
+            className="hidden sm:flex items-center gap-2 border-l border-zinc-200 dark:border-zinc-800 pl-4 py-1 group/user hover:opacity-90 active:scale-95 transition-all duration-200 cursor-pointer"
+            title="Pengaturan Profil"
+          >
+            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-teal-600 text-xs font-bold text-white border border-teal-600/40 group-hover/user:bg-teal-500 transition-colors shadow-sm">
               {getInitials(user?.name || '')}
             </div>
             <div className="text-left leading-none">
-              <p className="text-xs font-bold text-zinc-800 dark:text-zinc-200">{user?.name || 'Siswa'}</p>
+              <p className="text-xs font-bold text-zinc-800 dark:text-zinc-200 group-hover/user:text-teal-600 dark:group-hover/user:text-teal-500 transition-colors">
+                {user?.name || 'Siswa'}
+              </p>
               <p className="text-[9px] font-semibold text-zinc-500 dark:text-zinc-500">Siswa Perpustakaan</p>
             </div>
-          </div>
+          </Link>
 
           <button
             onClick={logout}

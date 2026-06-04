@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { LayoutDashboard, BookOpen, Receipt, LogOut, Library } from 'lucide-react';
+import { LayoutDashboard, BookOpen, Receipt, LogOut, Library, Users } from 'lucide-react';
 
 export default function Sidebar() {
   const { user, logout } = useAuth();
@@ -14,6 +14,7 @@ export default function Sidebar() {
     { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
     { name: 'Master Data Buku', path: '/admin/books', icon: BookOpen },
     { name: 'Transaksi', path: '/admin/transactions', icon: Receipt },
+    { name: 'Daftar User', path: '/admin/users', icon: Users },
   ];
 
   return (

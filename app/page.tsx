@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import Toast from '@/components/Toast';
 import { User, Lock, Library, ArrowRight, ShieldCheck, UserCheck, Eye, EyeOff } from 'lucide-react';
@@ -27,7 +28,7 @@ export default function LoginPage() {
     }
   }, [user, isLoading, router]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username.trim()) {
       setToast({ message: 'Username tidak boleh kosong.', type: 'error' });
@@ -37,20 +38,20 @@ export default function LoginPage() {
     setIsSubmitting(true);
 
     // Simulate network delay for premium feel
-    setTimeout(() => {
-      const success = login(username, password, role);
-      setIsSubmitting(false);
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    const success = await login(username, password, role);
+    setIsSubmitting(false);
 
-      if (success) {
-        setToast({ message: `Selamat datang, ${username}!`, type: 'success' });
+    if (success) {
+      setToast({ message: `Selamat datang, ${username}!`, type: 'success' });
+    } else {
+      if (role === 'admin') {
+        setToast({ message: 'Username atau kata sandi admin salah (sandi: admin123).', type: 'error' });
       } else {
-        if (role === 'admin') {
-          setToast({ message: 'Username atau kata sandi admin salah (sandi: admin123).', type: 'error' });
-        } else {
-          setToast({ message: 'Username atau kata sandi siswa salah (sandi: user321).', type: 'error' });
-        }
+        setToast({ message: 'Username atau kata sandi siswa salah.', type: 'error' });
       }
-    }, 800);
+    }
   };
 
   if (isLoading || user) {
@@ -79,12 +80,12 @@ export default function LoginPage() {
         <div className="flex flex-col items-center text-center mb-8">
           <div className="relative mb-4 group">
             <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 opacity-75 blur-md group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-tilt"></div>
-            <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-zinc-900 text-white shadow-xl">
-              <Library className="h-8 w-8 text-indigo-400 group-hover:scale-110 transition-transform duration-300" />
+            <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-white dark:bg-zinc-900 shadow-xl p-2 border border-white/5">
+              <img src="/logo.png" alt="peaceminusone-lib Logo" className="h-12 w-12 object-contain group-hover:scale-110 transition-transform duration-300" />
             </div>
           </div>
           <h2 className="text-3xl font-extrabold bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent tracking-tight">
-            NET-PERPUS
+            peaceminusone-lib
           </h2>
           <p className="text-xs text-zinc-500 mt-2 max-w-xs leading-relaxed">
             Sistem Informasi Perpustakaan Premium. Pinjam buku favorit dan kelola riwayat peminjaman secara digital.
@@ -193,6 +194,20 @@ export default function LoginPage() {
             </span>
           </button>
         </form>
+
+        {role === 'user' && (
+          <div className="mt-6 text-center border-t border-white/5 pt-4">
+            <p className="text-xs text-zinc-500">
+              Belum memiliki akun?{' '}
+              <Link
+                href="/signup"
+                className="font-bold text-indigo-400 hover:text-indigo-300 hover:underline transition-all"
+              >
+                Daftar Akun Baru
+              </Link>
+            </p>
+          </div>
+        )}
       </div>
 
 

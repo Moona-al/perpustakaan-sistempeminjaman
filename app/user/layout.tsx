@@ -24,7 +24,7 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
     return (
       <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-[#141414] transition-colors duration-300">
         <div className="flex flex-col items-center gap-4">
-          <div className="h-12 w-12 animate-spin rounded-full border-4 border-zinc-200 dark:border-zinc-800 border-t-red-600 dark:border-t-red-500"></div>
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-zinc-200 dark:border-zinc-800 border-t-teal-600 dark:border-t-teal-500"></div>
           <p className="text-sm font-medium text-zinc-650 dark:text-zinc-400">Memverifikasi otorisasi...</p>
         </div>
       </div>

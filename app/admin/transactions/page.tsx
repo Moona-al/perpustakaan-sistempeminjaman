@@ -10,19 +10,25 @@ import {
 } from 'lucide-react';
 
 export default function TransaksiPerpus() {
-  const { 
-    books, transactions, students, borrowBook, returnBook, 
-    isBookAvailable, addStudent, updateTransaction, deleteTransaction 
+  const {
+    books, transactions, students, borrowBook, returnBook,
+    isBookAvailable, addStudent, updateTransaction, deleteTransaction,
+    refreshStudents
   } = useBooks();
 
   const [activeTab, setActiveTab] = useState<'active' | 'new' | 'history'>('active');
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Auto-refresh students list when visiting transactions or switching tabs
+  useEffect(() => {
+    refreshStudents();
+  }, [refreshStudents, activeTab]);
+
   // New-borrow form state
   const [selectedBookId, setSelectedBookId] = useState('');
   const [selectedStudentUsername, setSelectedStudentUsername] = useState('');
   const [duration, setDuration] = useState('7');
-  
+
   // Student registration states
   const [newStudentUsername, setNewStudentUsername] = useState('');
   const [newStudentName, setNewStudentName] = useState('');
@@ -70,7 +76,7 @@ export default function TransaksiPerpus() {
     e.preventDefault();
     if (!selectedBookId) { setToast({ message: 'Pilih buku terlebih dahulu.', type: 'error' }); return; }
     if (!selectedStudentUsername) { setToast({ message: 'Pilih siswa peminjam.', type: 'error' }); return; }
-    
+
     setIsSubmitting(true);
     const res = await borrowBook(selectedBookId, selectedStudentUsername, parseInt(duration));
     setIsSubmitting(false);
@@ -140,7 +146,7 @@ export default function TransaksiPerpus() {
     const bDate = new Date(editBorrowDate);
     const dDate = new Date(editDueDate);
     let rDate: string | null = null;
-    
+
     if (editStatus === 'returned') {
       rDate = editReturnDate ? new Date(editReturnDate).toISOString() : new Date().toISOString();
     } else if (isCustomReturnDate && editReturnDate) {
@@ -322,7 +328,7 @@ export default function TransaksiPerpus() {
                     </p>
                   )}
                 </div>
-                
+
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => handleReturn(tx.id)}
@@ -704,7 +710,7 @@ export default function TransaksiPerpus() {
             <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-rose-500/10 text-rose-500 border border-rose-500/20 mb-4">
               <Trash2 className="h-6 w-6" />
             </div>
-            
+
             <h3 className="text-lg font-bold text-zinc-200">Hapus Riwayat Transaksi?</h3>
             <p className="text-xs text-zinc-400 mt-2 leading-relaxed">
               Apakah Anda yakin ingin menghapus catatan peminjaman ini secara permanen dari database? Tindakan ini tidak dapat dibatalkan.

@@ -8,8 +8,8 @@ import type { Book } from '@/context/BookContext';
 import { useFavorites } from '@/context/FavoritesContext';
 import Link from 'next/link';
 import Toast from '@/components/Toast';
-import { 
-  Search, BookOpen, ChevronLeft, ChevronRight, CheckCircle2, BookMarked, 
+import {
+  Search, BookOpen, ChevronLeft, ChevronRight, CheckCircle2, BookMarked,
   ArrowRight, Loader2, Sparkles, Play, Info, TrendingUp, Star, X, Heart
 } from 'lucide-react';
 
@@ -35,6 +35,7 @@ export default function StudentCatalog() {
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [borrowingId, setBorrowingId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const [selectedDuration, setSelectedDuration] = useState<number>(7);
 
   const categories = [
     'Semua', 'Self-Improvement', 'Drama', 'Literary', 'MetroPop',
@@ -90,7 +91,7 @@ export default function StudentCatalog() {
 
   // Netflix rows selections (only active when not searching)
   const isSearchActive = searchTerm !== '' || category !== 'Semua';
-  
+
   // Hero recommendations: take first 5 books to cycle
   const heroBooks = allCatalogBooks.slice(0, 5);
   const featuredBook = (heroIndex < heroBooks.length ? heroBooks[heroIndex] : heroBooks[0]) || null;
@@ -106,32 +107,32 @@ export default function StudentCatalog() {
 
   // Row Data lists
   const popularBooks = allCatalogBooks.slice(0, 8);
-  const fictionDramaBooks = allCatalogBooks.filter(b => 
+  const fictionDramaBooks = allCatalogBooks.filter(b =>
     b.category?.name === 'Drama' || b.category?.name === 'Fiksi' || b.category?.name === 'Literary'
   ).slice(0, 8);
-  const selfImprovementBooks = allCatalogBooks.filter(b => 
+  const selfImprovementBooks = allCatalogBooks.filter(b =>
     b.category?.name === 'Self-Improvement' || b.category?.name === 'Science & Nature'
   ).slice(0, 8);
 
   // Handle self-borrow
-  const handleBorrow = async (book: Book) => {
+  const handleBorrow = async (book: Book, durationDays = 7) => {
     if (!user) return;
 
     setBorrowingId(book._id);
     // Small delay for UX feedback
     await new Promise(r => setTimeout(r, 600));
 
-    const result = await borrowBook(book._id, user.username, 7);
+    const result = await borrowBook(book._id, user.username, durationDays);
     setBorrowingId(null);
 
     if (result.success) {
-      setToast({ message: `✓ Berhasil! "${book.title}" dipinjam selama 7 hari.`, type: 'success' });
+      setToast({ message: `✓ Berhasil! "${book.title}" dipinjam selama ${durationDays} hari.`, type: 'success' });
       // Close modal if open
       setSelectedBook(null);
     } else {
       setToast({ message: result.message, type: 'error' });
     }
-  };  return (
+  }; return (
     <div className="space-y-10 min-h-screen pb-16 bg-zinc-50 dark:bg-[#141414] text-zinc-900 dark:text-zinc-100 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 pt-4 transition-colors duration-300">
       {/* Premium Animations & Style Injector */}
       <style jsx global>{`
@@ -187,8 +188,8 @@ export default function StudentCatalog() {
 
           {/* Left Column: Featured Content details */}
           <div className="relative z-10 max-w-xl px-6 sm:px-12 py-8 flex flex-col items-start space-y-4">
-            <span className="opacity-0 animate-fade-up inline-flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-widest text-red-600 dark:text-red-500 bg-red-600/10 px-2.5 py-1 rounded border border-red-600/20 dark:border-red-500/25">
-              <Sparkles className="h-3 w-3 fill-red-600 dark:fill-red-500 animate-pulse" /> REKOMENDASI HARI INI
+            <span className="opacity-0 animate-fade-up inline-flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-widest text-teal-600 dark:text-teal-400 bg-teal-600/10 px-2.5 py-1 rounded border border-teal-600/20 dark:border-teal-500/25">
+              <Sparkles className="h-3 w-3 fill-teal-600 dark:fill-teal-400 animate-pulse" /> REKOMENDASI HARI INI
             </span>
             <h1 className="opacity-0 animate-fade-up delay-100 text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-tight text-zinc-950 dark:text-white drop-shadow-sm">
               {featuredBook.title}
@@ -205,7 +206,7 @@ export default function StudentCatalog() {
               <button
                 onClick={() => handleBorrow(featuredBook)}
                 disabled={borrowingId === featuredBook._id}
-                className="flex items-center gap-2 rounded-xl bg-red-650 hover:bg-red-700 text-white font-extrabold px-6 py-3 text-xs sm:text-sm shadow-lg shadow-red-600/20 dark:shadow-red-950/20 active:scale-[0.98] transition-all disabled:opacity-75 cursor-pointer"
+                className="flex items-center gap-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-extrabold px-6 py-3 text-xs sm:text-sm shadow-lg shadow-teal-600/20 dark:shadow-teal-950/20 active:scale-[0.98] transition-all disabled:opacity-75 cursor-pointer"
               >
                 {borrowingId === featuredBook._id ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -228,8 +229,8 @@ export default function StudentCatalog() {
           <div className="hidden md:flex relative z-10 w-1/3 pr-8 lg:pr-16 justify-end items-center self-stretch py-8">
             <div className="relative group/cover cursor-pointer animate-float">
               {/* Outer Glow */}
-              <div className="absolute -inset-2 bg-gradient-to-tr from-red-600 to-orange-500 rounded-2xl blur-xl opacity-25 group-hover/cover:opacity-50 transition duration-700 pointer-events-none" />
-              
+              <div className="absolute -inset-2 bg-gradient-to-tr from-teal-600 to-cyan-500 rounded-2xl blur-xl opacity-25 group-hover/cover:opacity-50 transition duration-700 pointer-events-none" />
+
               {/* Image Frame */}
               <div className="relative rounded-2xl overflow-hidden border border-zinc-200/20 dark:border-zinc-800/80 shadow-2xl transition-transform duration-500 group-hover/cover:-translate-y-2 group-hover/cover:scale-105 group-hover/cover:rotate-2">
                 <img
@@ -254,14 +255,14 @@ export default function StudentCatalog() {
           {popularBooks.length > 0 && (
             <div className="space-y-3">
               <h2 className="text-lg sm:text-xl font-black text-zinc-950 dark:text-white flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-red-600 dark:text-red-500" /> Sedang Populer
+                <TrendingUp className="h-5 w-5 text-teal-600 dark:text-teal-400" /> Sedang Populer
               </h2>
               <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-none scroll-smooth">
                 {popularBooks.map(book => (
                   <div
                     key={book._id}
                     onClick={() => setSelectedBook(book)}
-                    className="group flex-shrink-0 w-36 sm:w-44 cursor-pointer relative rounded-xl overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/85 hover:border-red-500/40 transition-all duration-300 hover:scale-105 shadow-sm hover:shadow-lg dark:shadow-md dark:shadow-black/40"
+                    className="group flex-shrink-0 w-36 sm:w-44 cursor-pointer relative rounded-xl overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/85 hover:border-teal-500/40 transition-all duration-300 hover:scale-105 shadow-sm hover:shadow-lg dark:shadow-md dark:shadow-black/40"
                   >
                     <div className="aspect-[2/3] w-full overflow-hidden bg-zinc-100 dark:bg-zinc-950">
                       <img
@@ -280,15 +281,14 @@ export default function StudentCatalog() {
                         e.stopPropagation();
                         toggleFavorite(book._id);
                       }}
-                      className="absolute top-2 right-2 z-10 p-1.5 rounded-full bg-white/80 dark:bg-black/50 backdrop-blur-sm border border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-red-650 transition-all duration-300 active:scale-90 hover:scale-110 shadow-sm"
+                      className="absolute top-2 right-2 z-10 p-1.5 rounded-full bg-white/80 dark:bg-black/50 backdrop-blur-sm border border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-teal-600 transition-all duration-300 active:scale-90 hover:scale-110 shadow-sm"
                       title={isFavorite(book._id) ? "Hapus dari Favorit" : "Tambah ke Favorit"}
                     >
                       <Heart
-                        className={`h-3.5 w-3.5 transition-colors ${
-                          isFavorite(book._id)
+                        className={`h-3.5 w-3.5 transition-colors ${isFavorite(book._id)
                             ? 'fill-red-600 text-red-600'
                             : 'text-zinc-600 dark:text-zinc-300'
-                        }`}
+                          }`}
                       />
                     </button>
                     {/* Hover Info Overlay */}
@@ -310,14 +310,14 @@ export default function StudentCatalog() {
           {fictionDramaBooks.length > 0 && (
             <div className="space-y-3">
               <h2 className="text-lg sm:text-xl font-black text-zinc-950 dark:text-white flex items-center gap-2">
-                <BookOpen className="h-5 w-5 text-red-600 dark:text-red-500" /> Fiksi & Drama Terfavorit
+                <BookOpen className="h-5 w-5 text-teal-600 dark:text-teal-400" /> Fiksi & Drama Terfavorit
               </h2>
               <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-none scroll-smooth">
                 {fictionDramaBooks.map(book => (
                   <div
                     key={book._id}
                     onClick={() => setSelectedBook(book)}
-                    className="group flex-shrink-0 w-36 sm:w-44 cursor-pointer relative rounded-xl overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/85 hover:border-red-500/40 transition-all duration-300 hover:scale-105 shadow-sm hover:shadow-lg dark:shadow-md dark:shadow-black/40"
+                    className="group flex-shrink-0 w-36 sm:w-44 cursor-pointer relative rounded-xl overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/85 hover:border-teal-500/40 transition-all duration-300 hover:scale-105 shadow-sm hover:shadow-lg dark:shadow-md dark:shadow-black/40"
                   >
                     <div className="aspect-[2/3] w-full overflow-hidden bg-zinc-100 dark:bg-zinc-950">
                       <img
@@ -336,15 +336,14 @@ export default function StudentCatalog() {
                         e.stopPropagation();
                         toggleFavorite(book._id);
                       }}
-                      className="absolute top-2 right-2 z-10 p-1.5 rounded-full bg-white/80 dark:bg-black/50 backdrop-blur-sm border border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-red-655 transition-all duration-300 active:scale-90 hover:scale-110 shadow-sm"
+                      className="absolute top-2 right-2 z-10 p-1.5 rounded-full bg-white/80 dark:bg-black/50 backdrop-blur-sm border border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-teal-600 transition-all duration-300 active:scale-90 hover:scale-110 shadow-sm"
                       title={isFavorite(book._id) ? "Hapus dari Favorit" : "Tambah ke Favorit"}
                     >
                       <Heart
-                        className={`h-3.5 w-3.5 transition-colors ${
-                          isFavorite(book._id)
+                        className={`h-3.5 w-3.5 transition-colors ${isFavorite(book._id)
                             ? 'fill-red-600 text-red-600'
                             : 'text-zinc-600 dark:text-zinc-300'
-                        }`}
+                          }`}
                       />
                     </button>
                     {/* Hover Info Overlay */}
@@ -366,14 +365,14 @@ export default function StudentCatalog() {
           {selfImprovementBooks.length > 0 && (
             <div className="space-y-3">
               <h2 className="text-lg sm:text-xl font-black text-zinc-950 dark:text-white flex items-center gap-2">
-                <Star className="h-5 w-5 text-red-600 dark:text-red-500 fill-red-600/10 dark:fill-red-500/20" /> Pengembangan Diri & Sains
+                <Star className="h-5 w-5 text-teal-600 dark:text-teal-400 fill-teal-600/10 dark:fill-teal-400/20" /> Pengembangan Diri & Sains
               </h2>
               <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-none scroll-smooth">
                 {selfImprovementBooks.map(book => (
                   <div
                     key={book._id}
                     onClick={() => setSelectedBook(book)}
-                    className="group flex-shrink-0 w-36 sm:w-44 cursor-pointer relative rounded-xl overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/85 hover:border-red-500/40 transition-all duration-300 hover:scale-105 shadow-sm hover:shadow-lg dark:shadow-md dark:shadow-black/40"
+                    className="group flex-shrink-0 w-36 sm:w-44 cursor-pointer relative rounded-xl overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/85 hover:border-teal-500/40 transition-all duration-300 hover:scale-105 shadow-sm hover:shadow-lg dark:shadow-md dark:shadow-black/40"
                   >
                     <div className="aspect-[2/3] w-full overflow-hidden bg-zinc-100 dark:bg-zinc-950">
                       <img
@@ -392,15 +391,14 @@ export default function StudentCatalog() {
                         e.stopPropagation();
                         toggleFavorite(book._id);
                       }}
-                      className="absolute top-2 right-2 z-10 p-1.5 rounded-full bg-white/80 dark:bg-black/50 backdrop-blur-sm border border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-red-655 transition-all duration-300 active:scale-90 hover:scale-110 shadow-sm"
+                      className="absolute top-2 right-2 z-10 p-1.5 rounded-full bg-white/80 dark:bg-black/50 backdrop-blur-sm border border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-teal-600 transition-all duration-300 active:scale-90 hover:scale-110 shadow-sm"
                       title={isFavorite(book._id) ? "Hapus dari Favorit" : "Tambah ke Favorit"}
                     >
                       <Heart
-                        className={`h-3.5 w-3.5 transition-colors ${
-                          isFavorite(book._id)
+                        className={`h-3.5 w-3.5 transition-colors ${isFavorite(book._id)
                             ? 'fill-red-600 text-red-600'
                             : 'text-zinc-600 dark:text-zinc-300'
-                        }`}
+                          }`}
                       />
                     </button>
                     {/* Hover Info Overlay */}
@@ -442,13 +440,13 @@ export default function StudentCatalog() {
               value={searchTerm}
               onChange={e => handleSearchChange(e.target.value)}
               placeholder="Cari judul buku atau nama penulis..."
-              className="w-full bg-white dark:bg-[#1e1e1e] border border-zinc-200 dark:border-zinc-800 rounded-xl py-3 pl-10 pr-4 text-sm text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-650 focus:outline-none focus:border-red-500/60 focus:ring-1 focus:ring-red-500/30 transition-all shadow-sm"
+              className="w-full bg-white dark:bg-[#1e1e1e] border border-zinc-200 dark:border-zinc-800 rounded-xl py-3 pl-10 pr-4 text-sm text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-650 focus:outline-none focus:border-teal-500/60 focus:ring-1 focus:ring-teal-500/30 transition-all shadow-sm"
             />
           </div>
           <select
             value={category}
             onChange={e => handleCategoryChange(e.target.value)}
-            className="bg-white dark:bg-[#1e1e1e] border border-zinc-200 dark:border-zinc-800 rounded-xl py-3 px-4 text-sm text-zinc-700 dark:text-zinc-300 focus:outline-none focus:border-red-500/60 transition-all sm:w-52 shadow-sm"
+            className="bg-white dark:bg-[#1e1e1e] border border-zinc-200 dark:border-zinc-800 rounded-xl py-3 px-4 text-sm text-zinc-700 dark:text-zinc-300 focus:outline-none focus:border-teal-500/60 transition-all sm:w-52 shadow-sm"
           >
             {categories.map(cat => (
               <option key={cat} value={cat} className="bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-350">{cat}</option>
@@ -476,7 +474,7 @@ export default function StudentCatalog() {
               <div
                 key={book._id}
                 onClick={() => setSelectedBook(book)}
-                className="group border border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-zinc-900/30 hover:bg-zinc-50 dark:hover:bg-[#1e1e1e] hover:border-red-500/30 rounded-xl p-3 flex flex-col justify-between cursor-pointer transition-all duration-300 shadow-sm hover:shadow-lg dark:hover:shadow-xl dark:hover:shadow-black/60"
+                className="group border border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-zinc-900/30 hover:bg-zinc-50 dark:hover:bg-[#1e1e1e] hover:border-teal-500/30 rounded-xl p-3 flex flex-col justify-between cursor-pointer transition-all duration-300 shadow-sm hover:shadow-lg dark:hover:shadow-xl dark:hover:shadow-black/60"
               >
                 <div>
                   <div className="relative w-full aspect-[2/3] rounded-lg overflow-hidden bg-zinc-100 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800/50 mb-3">
@@ -493,7 +491,7 @@ export default function StudentCatalog() {
                       ✓ Tersedia
                     </span>
                     {book.isCustom && (
-                      <span className="absolute top-2 left-2 bg-red-650/90 backdrop-blur-sm text-[8px] font-bold text-white px-1.5 py-0.5 rounded uppercase">
+                      <span className="absolute top-2 left-2 bg-teal-600/90 backdrop-blur-sm text-[8px] font-bold text-white px-1.5 py-0.5 rounded uppercase">
                         Admin
                       </span>
                     )}
@@ -503,25 +501,24 @@ export default function StudentCatalog() {
                         e.stopPropagation();
                         toggleFavorite(book._id);
                       }}
-                      className="absolute bottom-2 right-2 z-10 p-1.5 rounded-full bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm border border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-red-600 transition-all duration-305 active:scale-90 hover:scale-110 shadow-sm"
+                      className="absolute bottom-2 right-2 z-10 p-1.5 rounded-full bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm border border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-teal-600 transition-all duration-305 active:scale-90 hover:scale-110 shadow-sm"
                       title={isFavorite(book._id) ? "Hapus dari Favorit" : "Tambah ke Favorit"}
                     >
                       <Heart
-                        className={`h-3.5 w-3.5 transition-colors ${
-                          isFavorite(book._id)
-                            ? 'fill-red-600 text-red-655'
+                        className={`h-3.5 w-3.5 transition-colors ${isFavorite(book._id)
+                            ? 'fill-teal-600 text-teal-600'
                             : 'text-zinc-650 dark:text-zinc-300'
-                        }`}
+                          }`}
                       />
                     </button>
                   </div>
 
                   <div className="space-y-1 mb-2">
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-red-600 dark:text-red-500">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-teal-600 dark:text-teal-400">
                       {book.category?.name || 'Lainnya'}
                     </span>
                     <h3
-                      className="font-bold text-zinc-900 dark:text-zinc-100 text-xs sm:text-sm line-clamp-2 leading-snug group-hover:text-red-600 dark:group-hover:text-red-500 transition-colors"
+                      className="font-bold text-zinc-900 dark:text-zinc-100 text-xs sm:text-sm line-clamp-2 leading-snug group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors"
                       title={book.title}
                     >
                       {book.title}
@@ -533,7 +530,7 @@ export default function StudentCatalog() {
                 </div>
 
                 <div className="mt-2 pt-2 border-t border-zinc-100 dark:border-zinc-800/40">
-                  <span className="text-[10px] font-extrabold text-red-655 dark:text-red-500 flex items-center gap-1 group-hover:text-red-700 dark:group-hover:text-red-400 transition-colors">
+                  <span className="text-[10px] font-extrabold text-teal-600 dark:text-teal-400 flex items-center gap-1 group-hover:text-teal-700 dark:group-hover:text-teal-300 transition-colors">
                     Lihat Detail & Pinjam <ArrowRight className="h-3 w-3 group-hover:translate-x-1 transition-transform" />
                   </span>
                 </div>
@@ -606,7 +603,7 @@ export default function StudentCatalog() {
               </button>
 
               <div className="space-y-4">
-                <span className="inline-flex items-center rounded bg-red-600/10 px-2 py-0.5 text-[9px] font-extrabold tracking-wider uppercase text-red-650 dark:text-red-500 border border-red-550/20">
+                <span className="inline-flex items-center rounded bg-teal-600/10 px-2 py-0.5 text-[9px] font-extrabold tracking-wider uppercase text-teal-600 dark:text-teal-400 border border-teal-500/20">
                   {selectedBook.category?.name || 'Lainnya'}
                 </span>
                 <h3 className="text-xl md:text-2xl font-black text-zinc-900 dark:text-white leading-tight">
@@ -615,7 +612,7 @@ export default function StudentCatalog() {
                 <p className="text-xs text-zinc-500 dark:text-zinc-450 font-bold">
                   Penulis: <span className="text-zinc-800 dark:text-zinc-200">{selectedBook.author?.name}</span>
                 </p>
-                
+
                 {/* Scrollable Summary */}
                 <div className="border-t border-b border-zinc-200 dark:border-zinc-800/80 py-3 my-2">
                   <h4 className="text-xs font-bold uppercase text-zinc-400 dark:text-zinc-500 tracking-wider mb-1.5">Sinopsis Buku</h4>
@@ -647,12 +644,32 @@ export default function StudentCatalog() {
                 )}
               </div>
 
+              {/* Duration Selector */}
+              <div className="space-y-1.5 pt-4 border-t border-zinc-200 dark:border-zinc-800/80">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Durasi Peminjaman</label>
+                <div className="flex gap-2">
+                  {[7, 14, 30].map((d) => (
+                    <button
+                      key={d}
+                      type="button"
+                      onClick={() => setSelectedDuration(d)}
+                      className={`flex-grow py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${selectedDuration === d
+                          ? 'bg-teal-600/10 border-teal-500/35 text-teal-600 dark:text-teal-400'
+                          : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-zinc-555 hover:bg-zinc-100 dark:hover:bg-zinc-900'
+                        }`}
+                    >
+                      {d} Hari
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Borrow action & Favorite Toggle */}
               <div className="pt-4 flex gap-2">
                 <button
-                  onClick={() => handleBorrow(selectedBook)}
+                  onClick={() => handleBorrow(selectedBook, selectedDuration)}
                   disabled={borrowingId === selectedBook._id}
-                  className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-red-650 hover:bg-red-750 dark:bg-red-650 dark:hover:bg-red-700 py-3 text-xs font-extrabold text-white shadow-lg active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-wait cursor-pointer"
+                  className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-teal-600 hover:bg-teal-700 dark:bg-teal-600 dark:hover:bg-teal-700 py-3 text-xs font-extrabold text-white shadow-lg active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-wait cursor-pointer"
                 >
                   {borrowingId === selectedBook._id ? (
                     <>
@@ -662,20 +679,19 @@ export default function StudentCatalog() {
                   ) : (
                     <>
                       <BookMarked className="h-4 w-4" />
-                      Pinjam Sekarang (7 Hari)
+                      Pinjam Sekarang ({selectedDuration} Hari)
                     </>
                   )}
                 </button>
                 <button
                   onClick={() => toggleFavorite(selectedBook._id)}
-                  className={`flex h-11 w-11 items-center justify-center rounded-xl border transition-all duration-300 cursor-pointer ${
-                    isFavorite(selectedBook._id)
-                      ? 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-500/30 text-red-650 dark:text-red-500'
+                  className={`flex h-11 w-11 items-center justify-center rounded-xl border transition-all duration-300 cursor-pointer ${isFavorite(selectedBook._id)
+                      ? 'bg-teal-50 dark:bg-teal-950/30 border-teal-200 dark:border-teal-500/30 text-teal-600 dark:text-teal-400'
                       : 'bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400'
-                  }`}
+                    }`}
                   title={isFavorite(selectedBook._id) ? "Hapus dari Favorit" : "Tambah ke Favorit"}
                 >
-                  <Heart className={`h-5 w-5 ${isFavorite(selectedBook._id) ? 'fill-red-600 text-red-600' : ''}`} />
+                  <Heart className={`h-5 w-5 ${isFavorite(selectedBook._id) ? 'fill-teal-600 text-teal-600' : ''}`} />
                 </button>
               </div>
             </div>

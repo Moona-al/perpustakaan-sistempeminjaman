@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import mysql, { Pool } from 'mysql2/promise';
 
 // ─── Interfaces ─────────────────────────────────────────────────────────────
@@ -238,3 +239,85 @@ export async function upsertStudent(s: Student): Promise<void> {
     [s.username.toLowerCase().trim(), s.name.trim(), s.class]
   );
 }
+
+export async function getUserByUsername(username: string): Promise<any | null> {
+  const pool = await getDb();
+  const [rows] = await pool.query<any[]>(
+    `SELECT id, username, name, class, password, role, created_at FROM users WHERE username = ?`,
+    [username.toLowerCase().trim()]
+  );
+  if (rows.length === 0) return null;
+  return rows[0];
+}
+
+export async function getUsers(): Promise<any[]> {
+  const pool = await getDb();
+  const [rows] = await pool.query<any[]>(
+    `SELECT id, username, name, class, password, role, created_at FROM users ORDER BY created_at DESC`
+  );
+  return rows;
+}
+
+export async function createUser(u: { username: string; name: string; class: string; password?: string; role?: string }): Promise<void> {
+  const pool = await getDb();
+  const password = u.password || 'user321';
+  const role = u.role || 'user';
+  await pool.query(
+    `
+      INSERT INTO users (username, name, class, password, role)
+      VALUES (?, ?, ?, ?, ?)
+    `,
+    [u.username.toLowerCase().trim(), u.name.trim(), u.class, password, role]
+  );
+}
+
+export async function deleteUserById(id: string | number): Promise<boolean> {
+  const pool = await getDb();
+  const [result] = await pool.query<any>(
+    `DELETE FROM users WHERE id = ?`,
+    [id]
+  );
+  return (result.affectedRows ?? 0) > 0;
+}
+
+export async function updateUserProfile(
+  userId: number,
+  oldUsername: string,
+  name: string,
+  username: string,
+  password?: string
+): Promise<void> {
+  const pool = await getDb();
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+
+    // 1. Update user info
+    if (password) {
+      await conn.query(
+        `UPDATE users SET name = ?, username = ?, password = ? WHERE id = ?`,
+        [name.trim(), username.toLowerCase().trim(), password, userId]
+      );
+    } else {
+      await conn.query(
+        `UPDATE users SET name = ?, username = ? WHERE id = ?`,
+        [name.trim(), username.toLowerCase().trim(), userId]
+      );
+    }
+
+    // 2. Update transactions associated with student_username
+    await conn.query(
+      `UPDATE transactions SET student_name = ?, student_username = ? WHERE student_username = ?`,
+      [name.trim(), username.toLowerCase().trim(), oldUsername.toLowerCase().trim()]
+    );
+
+    await conn.commit();
+  } catch (err) {
+    await conn.rollback();
+    throw err;
+  } finally {
+    conn.release();
+  }
+}
+
+

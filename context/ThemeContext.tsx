@@ -18,7 +18,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const savedTheme = localStorage.getItem('perpus_theme') as Theme;
     if (savedTheme) {
-      setTheme(savedTheme);
+      setTimeout(() => {
+        setTheme(savedTheme);
+      }, 0);
       if (savedTheme === 'light') {
         document.documentElement.classList.remove('dark');
       } else {

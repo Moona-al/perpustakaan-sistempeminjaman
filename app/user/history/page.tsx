@@ -46,8 +46,8 @@ export default function StudentHistory() {
   const activeLoans = myLoans.filter(l => l.status === 'borrowed' || l.status === 'late');
   const pastLoans = myLoans.filter(l => l.status === 'returned');
 
-  // Accumulate current unpaid fines
-  const totalFines = activeLoans.reduce((sum, current) => sum + current.fine, 0);
+  // Accumulate total fines (active loans + returned history)
+  const totalFines = myLoans.reduce((sum, current) => sum + current.fine, 0);
 
   return (
     <div className="space-y-8 text-zinc-900 dark:text-zinc-100 transition-colors duration-300">
@@ -142,7 +142,7 @@ export default function StudentHistory() {
                         <p className="text-[10px] font-extrabold text-rose-600 dark:text-rose-400 mt-1">Denda: Rp {loan.fine.toLocaleString('id-ID')}</p>
                       )}
                     </div>
-                    
+
                     <Link
                       href={`/user/book/${loan.bookId}`}
                       className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/40 hover:bg-zinc-100 dark:hover:bg-zinc-900 px-4 py-2 text-xs font-bold text-zinc-700 dark:text-zinc-300 transition-all cursor-pointer shadow-sm dark:shadow-none"

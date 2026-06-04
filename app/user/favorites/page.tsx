@@ -28,6 +28,14 @@ export default function FavoritesPage() {
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [borrowingId, setBorrowingId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const [selectedDuration, setSelectedDuration] = useState<number>(7);
+
+  // Reset duration when selected book changes
+  useEffect(() => {
+    if (selectedBook) {
+      setSelectedDuration(7);
+    }
+  }, [selectedBook]);
 
   const categories = [
     'Semua', 'Self-Improvement', 'Drama', 'Literary', 'MetroPop',
@@ -74,18 +82,18 @@ export default function FavoritesPage() {
   }, [favorites, localBooks]);
 
   // Handle self-borrow
-  const handleBorrow = async (book: Book) => {
+  const handleBorrow = async (book: Book, durationDays = 7) => {
     if (!user) return;
 
     setBorrowingId(book._id);
     // Small delay for UX feedback
     await new Promise(r => setTimeout(r, 600));
 
-    const result = await borrowBook(book._id, user.username, 7);
+    const result = await borrowBook(book._id, user.username, durationDays);
     setBorrowingId(null);
 
     if (result.success) {
-      setToast({ message: `✓ Berhasil! "${book.title}" dipinjam selama 7 hari.`, type: 'success' });
+      setToast({ message: `✓ Berhasil! "${book.title}" dipinjam selama ${durationDays} hari.`, type: 'success' });
       // Close modal if open
       setSelectedBook(null);
     } else {
@@ -356,14 +364,36 @@ export default function FavoritesPage() {
                 )}
               </div>
 
+              {/* Duration Selector */}
+              {isBookAvailable(selectedBook._id) && (
+                <div className="space-y-1.5 pt-4 border-t border-zinc-200 dark:border-zinc-800/80">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Durasi Peminjaman</label>
+                  <div className="flex gap-2">
+                    {[7, 14, 30].map((d) => (
+                      <button
+                        key={d}
+                        type="button"
+                        onClick={() => setSelectedDuration(d)}
+                        className={`flex-grow py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${selectedDuration === d
+                          ? 'bg-rose-500/10 border-rose-500/35 text-rose-600 dark:text-rose-555'
+                          : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-zinc-550 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900'
+                          }`}
+                      >
+                        {d} Hari
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Borrow action & Favorite Toggle */}
               <div className="pt-4 flex gap-2">
                 <button
-                  onClick={() => handleBorrow(selectedBook)}
+                  onClick={() => handleBorrow(selectedBook, selectedDuration)}
                   disabled={borrowingId === selectedBook._id || !isBookAvailable(selectedBook._id)}
                   className={`flex-1 flex items-center justify-center gap-2 rounded-xl py-3 text-xs font-extrabold text-white shadow-lg active:scale-[0.98] transition-all disabled:cursor-not-allowed cursor-pointer ${!isBookAvailable(selectedBook._id)
-                      ? 'bg-zinc-300 dark:bg-zinc-850 text-zinc-500 dark:text-zinc-655 shadow-none hover:bg-zinc-300 dark:hover:bg-zinc-850'
-                      : 'bg-rose-650 hover:bg-rose-700 dark:bg-rose-650 dark:hover:bg-rose-750 border border-transparent shadow-rose-650/15'
+                    ? 'bg-zinc-300 dark:bg-zinc-850 text-zinc-500 dark:text-zinc-655 shadow-none hover:bg-zinc-300 dark:hover:bg-zinc-850'
+                    : 'bg-rose-650 hover:bg-rose-700 dark:bg-rose-650 dark:hover:bg-rose-750 border border-transparent shadow-rose-650/15'
                     }`}
                 >
                   {borrowingId === selectedBook._id ? (
@@ -379,7 +409,7 @@ export default function FavoritesPage() {
                   ) : (
                     <>
                       <BookMarked className="h-4 w-4" />
-                      Pinjam Sekarang (7 Hari)
+                      Pinjam Sekarang ({selectedDuration} Hari)
                     </>
                   )}
                 </button>
