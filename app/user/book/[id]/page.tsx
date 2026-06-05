@@ -8,7 +8,7 @@ import { useTheme } from '@/context/ThemeContext';
 import Toast from '@/components/Toast';
 import {
   ArrowLeft, Calendar, Clock, Landmark, Hash, CheckCircle,
-  HelpCircle, FileText, BookMarked, Loader2, AlertTriangle
+  HelpCircle, FileText, BookMarked, Loader2, AlertTriangle, Hourglass
 } from 'lucide-react';
 
 export default function BookDetailPage() {
@@ -104,8 +104,12 @@ export default function BookDetailPage() {
   const activeTx = transactions.find(
     t => t.bookId === book._id && (t.status === 'borrowed' || t.status === 'late')
   );
-  // Check if current user is the borrower
+  const pendingTx = transactions.find(
+    t => t.bookId === book._id && t.status === 'pending'
+  );
+  // Check if current user is the borrower/requestor
   const borrowedByMe = activeTx?.studentUsername === user?.username;
+  const pendingByMe = pendingTx?.studentUsername === user?.username;
 
   const formatDate = (ds: string) =>
     new Date(ds).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -188,10 +192,40 @@ export default function BookDetailPage() {
                     <><BookMarked className="h-4 w-4" /> Pinjam Buku Sekarang ({selectedDuration} Hari)</>
                   )}
                 </button>
+                </>
+                ) : pendingByMe ? (
+              <>
+                <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 text-sm font-extrabold animate-pulse">
+                  <Hourglass className="h-4.5 w-4.5 animate-spin-slow" /> Menunggu Persetujuan
+                </div>
+                <div className="bg-amber-500/5 border border-amber-200 dark:border-amber-500/15 rounded-xl p-3 space-y-1.5 text-[11px]">
+                  <div className="flex justify-between text-zinc-500 dark:text-zinc-400">
+                    <span>Tanggal Pengajuan</span>
+                    <span className="font-bold text-zinc-800 dark:text-zinc-200">{pendingTx ? formatDate(pendingTx.borrowDate) : '-'}</span>
+                  </div>
+                  <div className="flex justify-between text-zinc-500 dark:text-zinc-400">
+                    <span>Durasi Diajukan</span>
+                    <span className="font-bold text-zinc-800 dark:text-zinc-200">
+                      {pendingTx ? Math.round((new Date(pendingTx.dueDate).getTime() - new Date(pendingTx.borrowDate).getTime()) / 86400000) : 7} Hari
+                    </span>
+                  </div>
+                </div>
+                <p className="text-[11px] text-zinc-500 leading-relaxed font-semibold">
+                  Anda telah mengajukan peminjaman untuk buku ini. Silakan tunggu petugas perpustakaan untuk menyetujui permintaan Anda.
+                </p>
+              </>
+            ) : pendingTx ? (
+              <>
+                <div className="flex items-center gap-2 text-amber-600 dark:text-amber-455 text-sm font-extrabold">
+                  <Hourglass className="h-4.5 w-4.5" /> Sedang Diproses Siswa Lain
+                </div>
+                <p className="text-[11px] text-zinc-555 dark:text-zinc-500 leading-relaxed font-semibold">
+                  Buku ini sedang diajukan peminjaman oleh siswa lain ({pendingTx.studentName}) dan sedang menunggu persetujuan petugas perpustakaan.
+                </p>
               </>
             ) : borrowedByMe ? (
               <>
-                <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 text-sm font-extrabold">
+                <div className="flex items-center gap-2 text-indigo-650 dark:text-indigo-400 text-sm font-extrabold">
                   <BookMarked className="h-4.5 w-4.5" /> Sedang Anda Pinjam
                 </div>
                 <div className="bg-indigo-500/5 border border-indigo-200 dark:border-indigo-500/15 rounded-xl p-3 space-y-1.5 text-[11px]">
@@ -204,7 +238,7 @@ export default function BookDetailPage() {
                     <span className="font-bold text-zinc-800 dark:text-zinc-200">{activeTx ? formatDate(activeTx.dueDate) : '-'}</span>
                   </div>
                   {(activeTx?.fine ?? 0) > 0 && (
-                    <div className="flex justify-between text-rose-600 dark:text-rose-400 font-extrabold">
+                    <div className="flex justify-between text-rose-650 dark:text-rose-450 font-extrabold">
                       <span>Denda Berjalan</span>
                       <span>Rp {activeTx!.fine.toLocaleString('id-ID')}</span>
                     </div>
@@ -216,15 +250,15 @@ export default function BookDetailPage() {
               </>
             ) : (
               <>
-                <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 text-sm font-extrabold">
+                <div className="flex items-center gap-2 text-rose-655 dark:text-rose-455 text-sm font-extrabold">
                   <AlertTriangle className="h-4.5 w-4.5" /> Sedang Dipinjam Siswa Lain
                 </div>
-                <p className="text-[11px] text-zinc-500 leading-relaxed font-semibold">
+                <p className="text-[11px] text-zinc-555 leading-relaxed font-semibold">
                   Buku ini sedang dipinjam dan diperkirakan tersedia kembali pada:
                 </p>
                 {activeTx && (
-                  <div className="bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm font-black text-zinc-800 dark:text-zinc-200 shadow-sm dark:shadow-none">
-                    <Clock className="h-3.5 w-3.5 inline mr-1.5 text-zinc-400 dark:text-zinc-500" />
+                  <div className="bg-zinc-50 dark:bg-zinc-950 border border-zinc-205 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm font-black text-zinc-800 dark:text-zinc-200 shadow-sm dark:shadow-none">
+                    <Clock className="h-3.5 w-3.5 inline mr-1.5 text-zinc-400 dark:text-zinc-555" />
                     {formatDate(activeTx.dueDate)}
                   </div>
                 )}

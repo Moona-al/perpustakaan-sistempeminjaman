@@ -12,7 +12,7 @@ import {
 export default function KatalogBukuAdmin() {
   const { transactions, returnBook, isBookAvailable } = useBooks();
 
-  // Search & Filter state
+  // Search & Filter state (filter search)
   const [searchTerm, setSearchTerm] = useState('');
   const [category, setCategory] = useState('Semua');
   const [page, setPage] = useState(1);
@@ -33,7 +33,7 @@ export default function KatalogBukuAdmin() {
     'Mysteries & Thrillers', 'Poetry', 'Science & Nature', 'Picture Books', 'Fiksi'
   ];
 
-  // Fetch books from Bukuacak API
+  // Fetch books from Bukuacak API (fetching data dari API bukuacak)
   useEffect(() => {
     const fetchApiBooks = async () => {
       setIsLoading(true);

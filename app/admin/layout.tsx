@@ -35,9 +35,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Sidebar Navigation */}
       <Sidebar />
 
-      {/* Main Content Pane */}
-      <main className="flex-1 pl-72 min-h-screen flex flex-col">
-        <div className="flex-1 p-8 sm:p-10 max-w-7xl w-full mx-auto">
+      {/* Main Content Pane
+          - mobile: no left padding (sidebar is an overlay drawer), top padding for fixed topbar
+          - lg+: pl-72 to clear the fixed sidebar
+      */}
+      <main className="flex-1 lg:pl-72 min-h-screen flex flex-col pt-14 lg:pt-0">
+        <div className="flex-1 p-4 sm:p-6 lg:p-8 xl:p-10 max-w-7xl w-full mx-auto">
           {children}
         </div>
       </main>

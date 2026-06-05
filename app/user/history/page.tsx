@@ -4,7 +4,7 @@ import React from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useBooks } from '@/context/BookContext';
-import { Clock, Calendar, CheckCircle2, AlertCircle, BookOpen, Receipt } from 'lucide-react';
+import { Clock, Calendar, CheckCircle2, AlertCircle, BookOpen, Receipt, Hourglass } from 'lucide-react';
 import Link from 'next/link';
 
 export default function StudentHistory() {
@@ -19,7 +19,7 @@ export default function StudentHistory() {
     return new Date(dateStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
   };
 
-  const getStatusBadge = (status: 'borrowed' | 'returned' | 'late') => {
+  const getStatusBadge = (status: 'pending' | 'borrowed' | 'returned' | 'late') => {
     switch (status) {
       case 'returned':
         return (
@@ -33,16 +33,23 @@ export default function StudentHistory() {
             <AlertCircle className="h-3 w-3" /> Terlambat
           </span>
         );
+      case 'pending':
+        return (
+          <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-1 text-xs font-semibold text-amber-600 dark:text-amber-400 border border-amber-500/20 animate-pulse">
+            <Hourglass className="h-3 w-3" /> Menunggu Persetujuan
+          </span>
+        );
       default:
         return (
-          <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-1 text-xs font-semibold text-amber-600 dark:text-amber-400 border border-amber-500/20">
+          <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/10 px-2.5 py-1 text-xs font-semibold text-blue-600 dark:text-blue-400 border border-blue-500/20">
             <Clock className="h-3 w-3" /> Sedang Dipinjam
           </span>
         );
     }
   };
 
-  // Separate active loans and completed logs
+  // Separate loans by status
+  const pendingLoans = myLoans.filter(l => l.status === 'pending');
   const activeLoans = myLoans.filter(l => l.status === 'borrowed' || l.status === 'late');
   const pastLoans = myLoans.filter(l => l.status === 'returned');
 
@@ -74,14 +81,14 @@ export default function StudentHistory() {
           </div>
         </div>
 
-        {/* Active loans */}
+        {/* Pending loans */}
         <div className="border border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-zinc-900/40 p-5 rounded-2xl flex items-center gap-4 shadow-sm dark:shadow-none transition-all duration-300">
           <div className="p-3 bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/15 rounded-xl">
-            <Clock className="h-5.5 w-5.5" />
+            <Hourglass className="h-5.5 w-5.5" />
           </div>
           <div>
-            <p className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Sedang Dipinjam</p>
-            <p className="text-xl font-black text-zinc-800 dark:text-zinc-200 mt-0.5">{activeLoans.length} Buku</p>
+            <p className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Menunggu Persetujuan</p>
+            <p className="text-xl font-black text-zinc-800 dark:text-zinc-200 mt-0.5">{pendingLoans.length} Request</p>
           </div>
         </div>
 
@@ -101,6 +108,45 @@ export default function StudentHistory() {
 
       {/* Main List panels */}
       <div className="space-y-6">
+
+        {/* SECTION 0: PENDING REQUESTS */}
+        {pendingLoans.length > 0 && (
+          <div className="space-y-3">
+            <h2 className="text-lg font-black text-zinc-800 dark:text-zinc-300 flex items-center gap-2">
+              <Hourglass className="h-4.5 w-4.5 text-amber-500 dark:text-amber-400" />
+              Menunggu Persetujuan
+              <span className="ml-1 inline-flex items-center justify-center h-5 w-5 rounded-full bg-amber-500 text-[10px] font-black text-white animate-bounce">
+                {pendingLoans.length}
+              </span>
+            </h2>
+            <div className="grid grid-cols-1 gap-3">
+              {pendingLoans.map((loan) => (
+                <div
+                  key={loan.id}
+                  className="border border-amber-200/60 dark:border-amber-500/20 bg-amber-50/50 dark:bg-amber-500/5 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm"
+                >
+                  <div className="flex gap-4 items-center min-w-0">
+                    <img
+                      src={loan.coverImage}
+                      alt={loan.bookTitle}
+                      className="w-10 h-14 object-cover rounded-lg bg-zinc-100 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 shrink-0 shadow-sm"
+                      onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=387&auto=format&fit=crop'; }}
+                    />
+                    <div className="min-w-0">
+                      <h3 className="font-extrabold text-zinc-900 dark:text-zinc-100 truncate text-sm">{loan.bookTitle}</h3>
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1 text-[11px] text-zinc-500 dark:text-zinc-500 font-bold">
+                        <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> Diajukan: {formatDate(loan.borrowDate)}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 justify-between sm:justify-end border-t border-amber-100 dark:border-amber-500/10 sm:border-0 pt-3 sm:pt-0 shrink-0">
+                    {getStatusBadge(loan.status)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         {/* SECTION 1: ACTIVE LOANS */}
         <div className="space-y-4">
           <h2 className="text-lg font-black text-zinc-800 dark:text-zinc-300 flex items-center gap-2">

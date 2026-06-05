@@ -6,7 +6,7 @@ import Toast from '@/components/Toast';
 import {
   Search, RefreshCcw, CheckCircle, Clock, Calendar,
   AlertCircle, BookOpen, Users, ArrowDownCircle, PlusCircle, Receipt,
-  Edit2, Trash2, X, CalendarDays, Coins
+  Edit2, Trash2, X, CalendarDays, Coins, Hourglass
 } from 'lucide-react';
 
 export default function TransaksiPerpus() {
@@ -43,7 +43,7 @@ export default function TransaksiPerpus() {
   const [editBorrowDate, setEditBorrowDate] = useState('');
   const [editDueDate, setEditDueDate] = useState('');
   const [editReturnDate, setEditReturnDate] = useState('');
-  const [editStatus, setEditStatus] = useState<'borrowed' | 'returned' | 'late'>('borrowed');
+  const [editStatus, setEditStatus] = useState<'pending' | 'borrowed' | 'returned' | 'late'>('borrowed');
   const [editFine, setEditFine] = useState('0');
   const [isCustomReturnDate, setIsCustomReturnDate] = useState(false);
 
@@ -78,7 +78,7 @@ export default function TransaksiPerpus() {
     if (!selectedStudentUsername) { setToast({ message: 'Pilih siswa peminjam.', type: 'error' }); return; }
 
     setIsSubmitting(true);
-    const res = await borrowBook(selectedBookId, selectedStudentUsername, parseInt(duration));
+    const res = await borrowBook(selectedBookId, selectedStudentUsername, parseInt(duration), true);
     setIsSubmitting(false);
 
     if (res.success) {
@@ -214,7 +214,9 @@ export default function TransaksiPerpus() {
     new Date(ds).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
 
   // ── Status Badge helper ──────────────────────────────────────────────────
-  const StatusBadge = ({ status }: { status: 'borrowed' | 'returned' | 'late' }) => {
+  const StatusBadge = ({ status }: { status: 'pending' | 'borrowed' | 'returned' | 'late' }) => {
+    if (status === 'pending')
+      return <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-1 text-[11px] font-semibold text-amber-400 border border-amber-500/20 animate-pulse"><Hourglass className="h-3 w-3" />Pending</span>;
     if (status === 'returned')
       return <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-400 border border-emerald-500/20"><CheckCircle className="h-3 w-3" />Dikembalikan</span>;
     if (status === 'late')
@@ -642,6 +644,7 @@ export default function TransaksiPerpus() {
                   }}
                   className="w-full bg-zinc-950 border border-zinc-800 rounded-xl py-2.5 px-3.5 text-sm text-zinc-200 focus:outline-none focus:border-indigo-500"
                 >
+                  <option value="pending">Menunggu Persetujuan (Pending)</option>
                   <option value="borrowed">Sedang Dipinjam</option>
                   <option value="returned">Sudah Dikembalikan</option>
                   <option value="late">Terlambat Kembali</option>

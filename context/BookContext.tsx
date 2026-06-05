@@ -34,7 +34,7 @@ export interface Transaction {
   borrowDate: string; // ISO date
   dueDate: string; // ISO date
   returnDate: string | null; // ISO date
-  status: 'borrowed' | 'returned' | 'late';
+  status: 'pending' | 'borrowed' | 'returned' | 'late';
   fine: number;
 }
 
@@ -51,8 +51,10 @@ interface BookContextType {
   addBook: (book: Omit<Book, '_id'>) => Book;
   updateBook: (book: Book) => void;
   deleteBook: (id: string) => void;
-  borrowBook: (bookId: string, studentUsername: string, durationDays?: number) => Promise<{ success: boolean; message: string }>;
+  borrowBook: (bookId: string, studentUsername: string, durationDays?: number, isAdminManual?: boolean) => Promise<{ success: boolean; message: string }>;
   returnBook: (transactionId: string) => Promise<{ success: boolean; message: string }>;
+  approveRequest: (transactionId: string) => Promise<{ success: boolean; message: string }>;
+  rejectRequest: (transactionId: string) => Promise<{ success: boolean; message: string }>;
   getBorrowedBooksForUser: (username: string) => Transaction[];
   isBookAvailable: (bookId: string) => boolean;
   addStudent: (student: Student) => Promise<void>;
@@ -171,13 +173,13 @@ export function BookProvider({ children }: { children: React.ReactNode }) {
   const updateBook = (updatedBook: Book) => { };
   const deleteBook = (id: string) => { };
 
-  // Availability check
+  // Availability check — buku terkunci jika ada transaksi pending, borrowed, atau late
   const isBookAvailable = (bookId: string): boolean => {
-    return !transactions.some(tx => tx.bookId === bookId && (tx.status === 'borrowed' || tx.status === 'late'));
+    return !transactions.some(tx => tx.bookId === bookId && (tx.status === 'pending' || tx.status === 'borrowed' || tx.status === 'late'));
   };
 
   // Transactions operations
-  const borrowBook = async (bookId: string, studentUsername: string, durationDays = 7): Promise<{ success: boolean; message: string }> => {
+  const borrowBook = async (bookId: string, studentUsername: string, durationDays = 7, isAdminManual = false): Promise<{ success: boolean; message: string }> => {
     let book = books.find(b => b._id === bookId);
     if (!book) {
       try {
@@ -211,6 +213,10 @@ export function BookProvider({ children }: { children: React.ReactNode }) {
     const dueDate = new Date();
     dueDate.setDate(borrowDate.getDate() + durationDays);
 
+    // Admin manual borrowing: langsung 'borrowed', tanpa perlu approval
+    // Siswa meminjam sendiri: 'pending' menunggu persetujuan admin
+    const txStatus = isAdminManual ? 'borrowed' : 'pending';
+
     const newTx = {
       bookId: book._id,
       bookTitle: book.title,
@@ -220,7 +226,7 @@ export function BookProvider({ children }: { children: React.ReactNode }) {
       borrowDate: borrowDate.toISOString(),
       dueDate: dueDate.toISOString(),
       returnDate: null,
-      status: 'borrowed' as const,
+      status: txStatus as 'borrowed' | 'pending',
       fine: 0
     };
 
@@ -234,10 +240,47 @@ export function BookProvider({ children }: { children: React.ReactNode }) {
       const data = await res.json();
 
       setTransactions(prev => [data.transaction, ...prev]);
-      return { success: true, message: `Buku "${book.title}" berhasil dipinjam untuk ${student.name}.` };
+
+      if (isAdminManual) {
+        return { success: true, message: `Peminjaman "${book.title}" berhasil diproses langsung oleh admin.` };
+      }
+      return { success: true, message: `Permintaan peminjaman "${book.title}" telah dikirim. Menunggu persetujuan petugas perpustakaan.` };
     } catch (err) {
       console.error(err);
-      return { success: false, message: 'Gagal memproses peminjaman pada database.' };
+      return { success: false, message: 'Gagal memproses permintaan peminjaman pada database.' };
+    }
+  };
+
+  const approveRequest = async (transactionId: string): Promise<{ success: boolean; message: string }> => {
+    try {
+      const res = await fetch(`/api/transactions/${transactionId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'approve' })
+      });
+      if (!res.ok) throw new Error('Failed to approve');
+      const data = await res.json();
+      setTransactions(prev => prev.map(t => t.id === transactionId ? data.transaction : t));
+      return { success: true, message: 'Peminjaman berhasil disetujui.' };
+    } catch (err) {
+      console.error(err);
+      return { success: false, message: 'Gagal menyetujui permintaan.' };
+    }
+  };
+
+  const rejectRequest = async (transactionId: string): Promise<{ success: boolean; message: string }> => {
+    try {
+      const res = await fetch(`/api/transactions/${transactionId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'reject' })
+      });
+      if (!res.ok) throw new Error('Failed to reject');
+      setTransactions(prev => prev.filter(t => t.id !== transactionId));
+      return { success: true, message: 'Permintaan peminjaman ditolak.' };
+    } catch (err) {
+      console.error(err);
+      return { success: false, message: 'Gagal menolak permintaan.' };
     }
   };
 
@@ -367,6 +410,8 @@ export function BookProvider({ children }: { children: React.ReactNode }) {
       deleteBook,
       borrowBook,
       returnBook,
+      approveRequest,
+      rejectRequest,
       getBorrowedBooksForUser,
       isBookAvailable,
       addStudent,

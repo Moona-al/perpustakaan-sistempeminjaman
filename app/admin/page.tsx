@@ -5,15 +5,37 @@ import { useBooks } from '@/context/BookContext';
 import { 
   BookOpen, RefreshCw, AlertCircle, Users, ArrowUpRight, 
   CheckCircle, Clock, TrendingUp, Landmark, Award, BarChart3, 
-  ChevronRight, CalendarRange, Sparkles, TrendingDown, BookMarked
+  ChevronRight, CalendarRange, Sparkles, TrendingDown, BookMarked,
+  Bell, Check, X, Hourglass
 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function AdminDashboard() {
-  const { books, transactions, students } = useBooks();
+  const { books, transactions, students, approveRequest, rejectRequest } = useBooks();
 
   // Selected hover point index in chart
   const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
+  const [processingId, setProcessingId] = useState<string | null>(null);
+  const [actionMsg, setActionMsg] = useState<{ id: string; type: 'approve' | 'reject' } | null>(null);
+
+  // Pending requests
+  const pendingTransactions = transactions.filter(t => t.status === 'pending');
+
+  const handleApprove = async (id: string) => {
+    setProcessingId(id);
+    setActionMsg({ id, type: 'approve' });
+    await approveRequest(id);
+    setTimeout(() => setActionMsg(null), 800);
+    setProcessingId(null);
+  };
+
+  const handleReject = async (id: string) => {
+    setProcessingId(id);
+    setActionMsg({ id, type: 'reject' });
+    await rejectRequest(id);
+    setTimeout(() => setActionMsg(null), 800);
+    setProcessingId(null);
+  };
 
   // Statistics calculations
   const totalBooks = books.length;
@@ -145,7 +167,7 @@ export default function AdminDashboard() {
     areaPath += ` L ${points[points.length - 1].x} ${chartHeight - paddingY} Z`;
   }
 
-  const getStatusBadge = (status: 'borrowed' | 'returned' | 'late') => {
+  const getStatusBadge = (status: 'pending' | 'borrowed' | 'returned' | 'late') => {
     switch (status) {
       case 'returned':
         return (
@@ -157,6 +179,12 @@ export default function AdminDashboard() {
         return (
           <span className="inline-flex items-center gap-1 rounded-full bg-rose-500/10 px-2 py-0.5 text-[11px] font-bold text-rose-400 border border-rose-500/20 animate-pulse">
             <AlertCircle className="h-3 w-3" /> Terlambat
+          </span>
+        );
+      case 'pending':
+        return (
+          <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[11px] font-bold text-amber-400 border border-amber-500/20 animate-pulse">
+            <Hourglass className="h-3 w-3" /> Pending
           </span>
         );
       default:
@@ -174,90 +202,188 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="space-y-8 text-zinc-100 pb-12">
+    <div className="space-y-6 md:space-y-8 text-zinc-100 pb-12">
       {/* Welcome Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-zinc-800/60 pb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-zinc-800/60 pb-5">
         <div>
           <div className="flex items-center gap-2 text-indigo-400 text-xs font-bold uppercase tracking-wider mb-1">
-            <Sparkles className="h-4 w-4 animate-spin-slow" /> Konsol Petugas Perpustakaan
+            <Sparkles className="h-3.5 w-3.5 animate-spin-slow" /> Konsol Petugas Perpustakaan
           </div>
-          <h1 className="text-3xl font-black tracking-tight bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
             Dasbor Utama Admin
           </h1>
-          <p className="text-xs text-zinc-550 mt-1">
-            Kelola transaksi secara *real-time*, pantau rasio denda keterlambatan, dan analisa grafik peminjaman.
+          <p className="text-xs text-zinc-500 mt-1 hidden sm:block">
+            Kelola transaksi secara real-time, pantau rasio denda keterlambatan, dan analisa grafik peminjaman.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 shrink-0">
           <Link
             href="/admin/transactions"
-            className="flex items-center gap-1.5 bg-gradient-to-r from-indigo-650 to-violet-650 hover:from-indigo-600 hover:to-violet-600 text-white font-extrabold px-5 py-3 text-xs rounded-xl shadow-lg shadow-indigo-500/15 active:scale-[0.98] transition-all border border-indigo-500/20"
+            className="flex items-center gap-1.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-extrabold px-4 py-2.5 text-xs rounded-xl shadow-lg shadow-indigo-500/15 active:scale-[0.98] transition-all border border-indigo-500/20 whitespace-nowrap"
           >
-            Mulai Transaksi Baru <ArrowUpRight className="h-4 w-4" />
+            Transaksi Baru <ArrowUpRight className="h-3.5 w-3.5" />
           </Link>
         </div>
       </div>
 
-      {/* Grid Kartu Statistik (4 Cards + Glow effect on hover) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {/* Card 1: Total Books */}
-        <div className="relative overflow-hidden border border-zinc-800/80 bg-gradient-to-b from-zinc-900/50 to-zinc-950/60 p-6 rounded-2xl flex items-center justify-between group hover:border-indigo-500/30 transition-all duration-300 shadow-md">
-          <div className="space-y-1">
-            <p className="text-[10px] font-extrabold text-zinc-500 uppercase tracking-widest">Koleksi Buku</p>
-            <h3 className="text-3xl font-black text-white">{totalBooks}</h3>
-            <p className="text-[10px] text-zinc-450 flex items-center gap-1"><BookMarked className="h-3 w-3 text-indigo-400" /> API + Buku Kustom</p>
+      {/* ═══ PENDING REQUESTS SECTION ══════════════════════════════════════════ */}
+      {pendingTransactions.length > 0 && (
+        <div className="space-y-4">
+          {/* Section header with pulsing badge */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <div className="p-2 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400">
+                  <Bell className="h-5 w-5" />
+                </div>
+                <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-[10px] font-black text-white shadow-lg shadow-amber-500/40 animate-bounce">
+                  {pendingTransactions.length}
+                </span>
+              </div>
+              <div>
+                <h2 className="text-base font-black text-zinc-100">Permintaan Peminjaman Baru</h2>
+                <p className="text-xs text-zinc-500">{pendingTransactions.length} permintaan menunggu persetujuan Anda</p>
+              </div>
+            </div>
           </div>
-          <div className="p-3 rounded-xl border border-indigo-500/15 bg-indigo-500/10 text-indigo-400 group-hover:scale-110 transition-all duration-300">
-            <BookOpen className="h-6 w-6" />
+
+          {/* Pending Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {pendingTransactions.map((tx) => {
+              const isProcessing = processingId === tx.id;
+              const msg = actionMsg?.id === tx.id ? actionMsg.type : null;
+              return (
+                <div
+                  key={tx.id}
+                  className={`relative overflow-hidden rounded-2xl border transition-all duration-500 ${
+                    msg === 'approve'
+                      ? 'border-emerald-500/50 bg-emerald-500/10 scale-95 opacity-60'
+                      : msg === 'reject'
+                      ? 'border-rose-500/50 bg-rose-500/10 scale-95 opacity-60'
+                      : 'border-zinc-800/80 bg-zinc-900/50 hover:border-amber-500/30 hover:bg-zinc-900/80'
+                  }`}
+                >
+                  {/* Amber top stripe */}
+                  <div className="h-0.5 w-full bg-gradient-to-r from-amber-500 to-orange-500" />
+
+                  <div className="p-4 flex gap-3">
+                    {/* Book cover */}
+                    <img
+                      src={tx.coverImage || 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=387&auto=format&fit=crop'}
+                      alt={tx.bookTitle}
+                      className="w-12 h-16 object-cover rounded-lg border border-zinc-800 shrink-0 shadow-md"
+                      onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=387&auto=format&fit=crop'; }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-1">
+                        <p className="text-sm font-extrabold text-zinc-100 line-clamp-2 leading-tight" title={tx.bookTitle}>
+                          {tx.bookTitle}
+                        </p>
+                        <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-400 border border-amber-500/25 ml-1">
+                          <Hourglass className="h-2.5 w-2.5" /> Pending
+                        </span>
+                      </div>
+                      <p className="text-xs text-zinc-400 mt-1 font-semibold">
+                        👤 {tx.studentName}
+                        <span className="text-zinc-600 mx-1">·</span>
+                        <span className="text-zinc-500">{tx.studentUsername}</span>
+                      </p>
+                      <p className="text-[10px] text-zinc-600 mt-0.5">
+                        Request: {new Date(tx.borrowDate).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Action buttons */}
+                  <div className="flex gap-2 px-4 pb-4">
+                    <button
+                      onClick={() => handleApprove(tx.id)}
+                      disabled={isProcessing}
+                      className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs font-bold text-emerald-400 hover:bg-emerald-500/20 hover:border-emerald-500/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
+                    >
+                      {msg === 'approve' ? (
+                        <CheckCircle className="h-3.5 w-3.5" />
+                      ) : (
+                        <Check className="h-3.5 w-3.5" />
+                      )}
+                      Setujui
+                    </button>
+                    <button
+                      onClick={() => handleReject(tx.id)}
+                      disabled={isProcessing}
+                      className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-xs font-bold text-rose-400 hover:bg-rose-500/20 hover:border-rose-500/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                      Tolak
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Grid Kartu Statistik (4 Cards + Glow effect on hover) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
+        {/* Card 1: Total Books */}
+        <div className="relative overflow-hidden border border-zinc-800/80 bg-gradient-to-b from-zinc-900/50 to-zinc-950/60 p-4 sm:p-6 rounded-2xl flex items-center justify-between group hover:border-indigo-500/30 transition-all duration-300 shadow-md">
+          <div className="space-y-1">
+            <p className="text-[9px] sm:text-[10px] font-extrabold text-zinc-500 uppercase tracking-widest">Koleksi Buku</p>
+            <h3 className="text-2xl sm:text-3xl font-black text-white">{totalBooks}</h3>
+            <p className="text-[9px] sm:text-[10px] text-zinc-450 flex items-center gap-1"><BookMarked className="h-3 w-3 text-indigo-400" /> API + Buku Kustom</p>
+          </div>
+          <div className="p-2.5 sm:p-3 rounded-xl border border-indigo-500/15 bg-indigo-500/10 text-indigo-400 group-hover:scale-110 transition-all duration-300">
+            <BookOpen className="h-5 w-5 sm:h-6 sm:w-6" />
           </div>
           <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-indigo-500 to-violet-500 scale-x-0 group-hover:scale-x-100 transition-transform duration-500" />
         </div>
 
         {/* Card 2: Active Borrowings */}
-        <div className="relative overflow-hidden border border-zinc-800/80 bg-gradient-to-b from-zinc-900/50 to-zinc-950/60 p-6 rounded-2xl flex items-center justify-between group hover:border-amber-500/30 transition-all duration-300 shadow-md">
+        <div className="relative overflow-hidden border border-zinc-800/80 bg-gradient-to-b from-zinc-900/50 to-zinc-950/60 p-4 sm:p-6 rounded-2xl flex items-center justify-between group hover:border-amber-500/30 transition-all duration-300 shadow-md">
           <div className="space-y-1">
-            <p className="text-[10px] font-extrabold text-zinc-500 uppercase tracking-widest">Aktif Dipinjam</p>
-            <h3 className="text-3xl font-black text-white">{totalActiveBorrowings}</h3>
-            <p className="text-[10px] text-zinc-450 flex items-center gap-1"><RefreshCw className="h-3 w-3 text-amber-400 animate-spin-slow" /> {totalActiveBorrowings} buku di luar</p>
+            <p className="text-[9px] sm:text-[10px] font-extrabold text-zinc-500 uppercase tracking-widest">Aktif Dipinjam</p>
+            <h3 className="text-2xl sm:text-3xl font-black text-white">{totalActiveBorrowings}</h3>
+            <p className="text-[9px] sm:text-[10px] text-zinc-450 flex items-center gap-1"><RefreshCw className="h-3 w-3 text-amber-400 animate-spin-slow" /> {totalActiveBorrowings} buku di luar</p>
           </div>
-          <div className="p-3 rounded-xl border border-amber-500/15 bg-amber-500/10 text-amber-400 group-hover:scale-110 transition-all duration-300">
-            <RefreshCw className="h-6 w-6" />
+          <div className="p-2.5 sm:p-3 rounded-xl border border-amber-500/15 bg-amber-500/10 text-amber-400 group-hover:scale-110 transition-all duration-300">
+            <RefreshCw className="h-5 w-5 sm:h-6 sm:w-6" />
           </div>
           <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-amber-500 to-orange-500 scale-x-0 group-hover:scale-x-100 transition-transform duration-500" />
         </div>
 
         {/* Card 3: Overdue Returns */}
-        <div className="relative overflow-hidden border border-zinc-800/80 bg-gradient-to-b from-zinc-900/50 to-zinc-950/60 p-6 rounded-2xl flex items-center justify-between group hover:border-rose-500/30 transition-all duration-300 shadow-md">
+        <div className="relative overflow-hidden border border-zinc-800/80 bg-gradient-to-b from-zinc-900/50 to-zinc-950/60 p-4 sm:p-6 rounded-2xl flex items-center justify-between group hover:border-rose-500/30 transition-all duration-300 shadow-md">
           <div className="space-y-1">
-            <p className="text-[10px] font-extrabold text-zinc-500 uppercase tracking-widest">Terlambat Kembali</p>
-            <h3 className="text-3xl font-black text-rose-500">{totalOverdue}</h3>
-            <p className="text-[10px] text-rose-400/80 font-bold flex items-center gap-1"><TrendingUp className="h-3 w-3" /> {lateRate}% rasio keterlambatan</p>
+            <p className="text-[9px] sm:text-[10px] font-extrabold text-zinc-500 uppercase tracking-widest">Terlambat Kembali</p>
+            <h3 className="text-2xl sm:text-3xl font-black text-rose-500">{totalOverdue}</h3>
+            <p className="text-[9px] sm:text-[10px] text-rose-400/80 font-bold flex items-center gap-1"><TrendingUp className="h-3 w-3" /> {lateRate}% rasio</p>
           </div>
-          <div className="p-3 rounded-xl border border-rose-500/20 bg-rose-500/10 text-rose-400 group-hover:scale-110 transition-all duration-300">
-            <AlertCircle className="h-6 w-6" />
+          <div className="p-2.5 sm:p-3 rounded-xl border border-rose-500/20 bg-rose-500/10 text-rose-400 group-hover:scale-110 transition-all duration-300">
+            <AlertCircle className="h-5 w-5 sm:h-6 sm:w-6" />
           </div>
           <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-rose-500 to-pink-500 scale-x-0 group-hover:scale-x-100 transition-transform duration-500" />
         </div>
 
         {/* Card 4: Accumulated Fines */}
-        <div className="relative overflow-hidden border border-zinc-800/80 bg-gradient-to-b from-zinc-900/50 to-zinc-950/60 p-6 rounded-2xl flex items-center justify-between group hover:border-emerald-500/30 transition-all duration-300 shadow-md">
-          <div className="space-y-1">
-            <p className="text-[10px] font-extrabold text-zinc-500 uppercase tracking-widest">Total Denda</p>
-            <h3 className="text-2xl font-black text-emerald-400">Rp {totalFines.toLocaleString('id-ID')}</h3>
-            <p className="text-[10px] text-zinc-450 flex items-center gap-1"><Landmark className="h-3 w-3 text-emerald-400" /> Akumulasi denda aktif</p>
+        <div className="relative overflow-hidden border border-zinc-800/80 bg-gradient-to-b from-zinc-900/50 to-zinc-950/60 p-4 sm:p-6 rounded-2xl flex items-center justify-between group hover:border-emerald-500/30 transition-all duration-300 shadow-md">
+          <div className="space-y-1 min-w-0">
+            <p className="text-[9px] sm:text-[10px] font-extrabold text-zinc-500 uppercase tracking-widest">Total Denda</p>
+            <h3 className="text-lg sm:text-2xl font-black text-emerald-400 truncate">Rp {totalFines.toLocaleString('id-ID')}</h3>
+            <p className="text-[9px] sm:text-[10px] text-zinc-450 flex items-center gap-1"><Landmark className="h-3 w-3 text-emerald-400" /> Akumulasi denda</p>
           </div>
-          <div className="p-3 rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 group-hover:scale-110 transition-all duration-300">
-            <Landmark className="h-6 w-6" />
+          <div className="p-2.5 sm:p-3 rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 group-hover:scale-110 transition-all duration-300 shrink-0">
+            <Landmark className="h-5 w-5 sm:h-6 sm:w-6" />
           </div>
           <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-emerald-500 to-teal-500 scale-x-0 group-hover:scale-x-100 transition-transform duration-500" />
         </div>
       </div>
 
       {/* Main Column Grid: Chart and Categories */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
         
         {/* Latar Grafik Frekuensi Peminjaman (Interactive Area Curve Chart) */}
-        <div className="relative lg:col-span-2 border border-zinc-800/80 bg-zinc-900/30 p-6 rounded-2xl flex flex-col justify-between space-y-4 shadow-sm">
+        <div className="relative xl:col-span-2 border border-zinc-800/80 bg-zinc-900/30 p-4 sm:p-6 rounded-2xl flex flex-col justify-between space-y-4 shadow-sm">
           
           <div className="flex justify-between items-start">
             <div>
@@ -381,7 +507,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Daily Details Table under chart */}
-          <div className="grid grid-cols-7 gap-2 pt-2 text-center text-[10px]">
+          <div className="grid grid-cols-7 gap-1 sm:gap-2 pt-2 text-center text-[10px] overflow-x-auto">
             {chartData.map((d, i) => (
               <div 
                 key={d.dateStr} 
@@ -401,7 +527,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Kategori Buku Chart Panel (Top 5 categories + Detail stats) */}
-        <div className="border border-zinc-800/80 bg-zinc-900/30 p-6 rounded-2xl flex flex-col justify-between space-y-4 shadow-sm">
+        <div className="border border-zinc-800/80 bg-zinc-900/30 p-4 sm:p-6 rounded-2xl flex flex-col justify-between space-y-4 shadow-sm">
           <div>
             <h2 className="text-base font-bold text-zinc-200 flex items-center gap-1.5">
               <TrendingUp className="h-4.5 w-4.5 text-indigo-400" /> Kategori Terpopuler
@@ -453,7 +579,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* NEW: Expanded Detailed Statistics Row (Average Duration & Mutations today) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
         <div className="border border-zinc-800/80 bg-zinc-900/30 p-5 rounded-2xl flex items-center gap-4 group hover:border-indigo-500/20 transition-all duration-300">
           <div className="p-3 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 rounded-xl shrink-0 group-hover:scale-105 transition-transform duration-300">
             <CalendarRange className="h-6 w-6" />
@@ -478,9 +604,9 @@ export default function AdminDashboard() {
       </div>
 
       {/* Bottom Grid: Insights & Top lists */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Column 1: Top Active Students */}
-        <div className="border border-zinc-800/80 bg-zinc-900/30 p-6 rounded-2xl flex flex-col justify-between shadow-sm">
+        <div className="border border-zinc-800/80 bg-zinc-900/30 p-4 sm:p-6 rounded-2xl flex flex-col justify-between shadow-sm">
           <div className="space-y-1 mb-4">
             <h2 className="text-base font-bold text-zinc-200 flex items-center gap-1.5">
               <Award className="h-4.5 w-4.5 text-indigo-400" /> Siswa Paling Aktif
@@ -513,7 +639,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Column 2: Top Borrowed Books */}
-        <div className="border border-zinc-800/80 bg-zinc-900/30 p-6 rounded-2xl flex flex-col justify-between shadow-sm">
+        <div className="border border-zinc-800/80 bg-zinc-900/30 p-4 sm:p-6 rounded-2xl flex flex-col justify-between shadow-sm">
           <div className="space-y-1 mb-4">
             <h2 className="text-base font-bold text-zinc-200 flex items-center gap-1.5">
               <BookOpen className="h-4.5 w-4.5 text-indigo-400" /> Buku Terpopuler
@@ -546,7 +672,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Column 3: Recent Activity Summary Link */}
-        <div className="border border-zinc-800/80 bg-zinc-900/30 p-6 rounded-2xl flex flex-col justify-between shadow-sm">
+        <div className="sm:col-span-2 lg:col-span-1 border border-zinc-800/80 bg-zinc-900/30 p-4 sm:p-6 rounded-2xl flex flex-col justify-between shadow-sm">
           <div>
             <div className="flex justify-between items-start">
               <h2 className="text-base font-bold text-zinc-200 flex items-center gap-1.5">

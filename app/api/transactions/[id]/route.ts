@@ -1,9 +1,42 @@
 import { NextResponse } from 'next/server';
-import { getTransactions, upsertTransaction, deleteTransactionById } from '@/lib/database';
+import { getTransactions, upsertTransaction, deleteTransactionById, approvePendingTransaction, rejectPendingTransaction } from '@/lib/database';
 import type { Transaction } from '@/lib/database';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
+}
+
+export async function POST(request: Request, context: RouteContext) {
+  try {
+    const { id } = await context.params;
+    const body = await request.json();
+    const { action } = body;
+
+    if (action === 'approve') {
+      const approved = await approvePendingTransaction(id);
+      if (!approved) {
+        return NextResponse.json(
+          { error: 'Transaksi tidak ditemukan atau bukan status pending.' },
+          { status: 404 }
+        );
+      }
+      return NextResponse.json({ success: true, transaction: approved });
+    } else if (action === 'reject') {
+      const deleted = await rejectPendingTransaction(id);
+      if (!deleted) {
+        return NextResponse.json(
+          { error: 'Transaksi tidak ditemukan atau bukan status pending.' },
+          { status: 404 }
+        );
+      }
+      return NextResponse.json({ success: true });
+    }
+
+    return NextResponse.json({ error: 'Action tidak valid' }, { status: 400 });
+  } catch (error) {
+    console.error('Error processing transaction action:', error);
+    return NextResponse.json({ error: 'Gagal memproses aksi transaksi' }, { status: 500 });
+  }
 }
 
 export async function PUT(request: Request, context: RouteContext) {
@@ -40,3 +73,4 @@ export async function DELETE(request: Request, context: RouteContext) {
     return NextResponse.json({ error: 'Failed to delete transaction' }, { status: 500 });
   }
 }
+

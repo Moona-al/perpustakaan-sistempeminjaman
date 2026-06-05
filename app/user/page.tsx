@@ -126,7 +126,7 @@ export default function StudentCatalog() {
     setBorrowingId(null);
 
     if (result.success) {
-      setToast({ message: `✓ Berhasil! "${book.title}" dipinjam selama ${durationDays} hari.`, type: 'success' });
+      setToast({ message: `✓ Berhasil! "${book.title}" dipinjam selama ${durationDays} hari. Silahkan Menunggu Approval Admin`, type: 'success' });
       // Close modal if open
       setSelectedBook(null);
     } else {

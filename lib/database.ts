@@ -13,7 +13,7 @@ export interface Transaction {
   borrowDate: string;   // ISO string
   dueDate: string;      // ISO string
   returnDate: string | null;
-  status: 'borrowed' | 'returned' | 'late';
+  status: 'pending' | 'borrowed' | 'returned' | 'late';
   fine: number;
 }
 
@@ -211,6 +211,47 @@ export async function deleteTransactionById(id: string): Promise<boolean> {
   const pool = await getDb();
   const [result] = await pool.query<any>(
     `DELETE FROM transactions WHERE id = ?`,
+    [id]
+  );
+  return (result.affectedRows ?? 0) > 0;
+}
+
+export async function approvePendingTransaction(id: string): Promise<Transaction | null> {
+  const pool = await getDb();
+  const now = new Date();
+  // Hitung ulang dueDate berdasarkan waktu approve (bukan waktu request)
+  // Ambil data transaksi dulu untuk menghitung durasi
+  const [rows] = await pool.query<any[]>(
+    `SELECT * FROM transactions WHERE id = ? AND status = 'pending'`,
+    [id]
+  );
+  if (!rows.length) return null;
+  const tx = toTransaction(rows[0]);
+
+  // Hitung durasi dari borrowDate asal ke dueDate untuk mempertahankan durasi
+  const origBorrow = new Date(tx.borrowDate);
+  const origDue = new Date(tx.dueDate);
+  const durationMs = origDue.getTime() - origBorrow.getTime();
+  const newDueDate = new Date(now.getTime() + durationMs).toISOString();
+
+  await pool.query(
+    `UPDATE transactions SET status = 'borrowed', borrow_date = ?, due_date = ? WHERE id = ?`,
+    [now.toISOString(), newDueDate, id]
+  );
+
+  const approved: Transaction = {
+    ...tx,
+    status: 'borrowed',
+    borrowDate: now.toISOString(),
+    dueDate: newDueDate,
+  };
+  return approved;
+}
+
+export async function rejectPendingTransaction(id: string): Promise<boolean> {
+  const pool = await getDb();
+  const [result] = await pool.query<any>(
+    `DELETE FROM transactions WHERE id = ? AND status = 'pending'`,
     [id]
   );
   return (result.affectedRows ?? 0) > 0;
